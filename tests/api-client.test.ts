@@ -302,26 +302,16 @@ describe("GreeksSurgeClient", () => {
     expect(urls).toEqual(["/api/user/watchlist", "/api/user/preferences"]);
   });
 
-  it("rejects arbitrary API paths even through the runtime method", async () => {
-    const server = await withServer((_req, res) => json(res, 200, {}));
-    cleanups.push(server.close);
+  it("does not expose the raw request primitive at runtime", () => {
     const client = new GreeksSurgeClient({
-      baseUrl: server.baseUrl,
+      baseUrl: new URL("https://csp.greekssurge.com"),
       minIntervalMs: 0,
     });
 
-    await expect(
-      (
-        client as unknown as {
-          requestJson(
-            method: "GET",
-            path: string,
-            query: undefined,
-            schema: "status",
-          ): Promise<unknown>;
-        }
-      ).requestJson("GET", "/api/admin/private", undefined, "status"),
-    ).rejects.toMatchObject({ code: "INVALID_QUERY" });
+    expect("requestJson" in client).toBe(false);
+    expect(
+      (client as unknown as Record<string, unknown>).requestJson,
+    ).toBeUndefined();
   });
 
   it("throttles across client instances sharing one upstream origin", async () => {

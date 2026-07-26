@@ -59,19 +59,19 @@ export class GreeksSurgeClient {
   }
 
   async getMarketStatus(): Promise<ParsedUpstream<"status">> {
-    return this.requestJson("GET", "/api/status", undefined, "status", {
+    return this.#requestJson("GET", "/api/status", undefined, "status", {
       publicCache: true,
     });
   }
 
   async getAccount(): Promise<ParsedUpstream<"authMe">> {
-    return this.requestJson("GET", "/api/auth/me", undefined, "authMe");
+    return this.#requestJson("GET", "/api/auth/me", undefined, "authMe");
   }
 
   async listTradeIdeas(
     query: IdeasQuery = {},
   ): Promise<ParsedUpstream<"ideas">> {
-    return this.requestJson(
+    return this.#requestJson(
       "GET",
       "/api/ideas",
       buildIdeasQuery(query),
@@ -80,23 +80,23 @@ export class GreeksSurgeClient {
   }
 
   async getAvailableFilters(): Promise<ParsedUpstream<"filters">> {
-    return this.requestJson("GET", "/api/filters", undefined, "filters", {
+    return this.#requestJson("GET", "/api/filters", undefined, "filters", {
       publicCache: true,
     });
   }
 
   async getPerformanceStats(): Promise<ParsedUpstream<"stats">> {
-    return this.requestJson("GET", "/api/stats", undefined, "stats");
+    return this.#requestJson("GET", "/api/stats", undefined, "stats");
   }
 
   async listHistory(): Promise<ParsedUpstream<"history">> {
-    return this.requestJson("GET", "/api/history", undefined, "history");
+    return this.#requestJson("GET", "/api/history", undefined, "history");
   }
 
   async listTradeHistory(
     query: TradeHistoryQuery = {},
   ): Promise<ParsedUpstream<"tradeHistory">> {
-    return this.requestJson(
+    return this.#requestJson(
       "GET",
       "/api/trade-history",
       buildTradeHistoryQuery(query),
@@ -105,7 +105,7 @@ export class GreeksSurgeClient {
   }
 
   async listEducation(): Promise<ParsedUpstream<"educationList">> {
-    return this.requestJson(
+    return this.#requestJson(
       "GET",
       "/api/education",
       undefined,
@@ -122,7 +122,7 @@ export class GreeksSurgeClient {
         "INVALID_QUERY",
         "Invalid education article slug.",
       );
-    return this.requestJson(
+    return this.#requestJson(
       "GET",
       `/api/education/${slug}`,
       undefined,
@@ -132,7 +132,7 @@ export class GreeksSurgeClient {
   }
 
   async getWatchlist(): Promise<ParsedUpstream<"watchlist">> {
-    return this.requestJson(
+    return this.#requestJson(
       "GET",
       "/api/user/watchlist",
       undefined,
@@ -141,7 +141,7 @@ export class GreeksSurgeClient {
   }
 
   async getPreferences(): Promise<ParsedUpstream<"preferences">> {
-    return this.requestJson(
+    return this.#requestJson(
       "GET",
       "/api/user/preferences",
       undefined,
@@ -149,7 +149,7 @@ export class GreeksSurgeClient {
     );
   }
 
-  async requestJson<TName extends UpstreamSchemaName>(
+  async #requestJson<TName extends UpstreamSchemaName>(
     method: "GET",
     path: string,
     query: URLSearchParams | undefined,
