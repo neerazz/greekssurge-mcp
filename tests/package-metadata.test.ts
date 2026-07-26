@@ -116,4 +116,10 @@ describe("package metadata", () => {
     expect(dependabot).toContain("package-ecosystem: npm");
     expect(dependabot).toContain("package-ecosystem: github-actions");
   });
+
+  it("pins LF line endings so Windows CI evaluates the committed bytes", async () => {
+    const attributes = await readFile(".gitattributes", "utf8");
+
+    expect(attributes).toContain("* text=auto eol=lf");
+  });
 });

@@ -14,6 +14,7 @@ const releaseRoots = [
   "package.json",
   "package-lock.json",
   ".npmignore",
+  ".gitattributes",
   "eslint.config.js",
   "tsconfig.json",
   "vitest.config.ts",
