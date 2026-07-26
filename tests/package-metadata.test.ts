@@ -122,4 +122,11 @@ describe("package metadata", () => {
 
     expect(attributes).toContain("* text=auto eol=lf");
   });
+
+  it("invokes npm through the Windows command shim in package verification", async () => {
+    const verifier = await readFile("scripts/verify-package.mjs", "utf8");
+
+    expect(verifier).toContain('command === "npm"');
+    expect(verifier).toContain('"npm.cmd"');
+  });
 });

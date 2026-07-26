@@ -229,7 +229,9 @@ async function sdkSmokeTest(bin, apiUrl, baseEnv) {
 }
 
 function run(command, args, options = {}) {
-  const result = spawnSync(command, args, {
+  const executable =
+    process.platform === "win32" && command === "npm" ? "npm.cmd" : command;
+  const result = spawnSync(executable, args, {
     cwd: options.cwd,
     env: options.env,
     encoding: "utf8",
@@ -237,7 +239,7 @@ function run(command, args, options = {}) {
   });
   if (result.status !== 0) {
     throw new Error(
-      `${command} ${args.join(" ")} failed with ${result.status}: ${result.stderr || result.stdout}`,
+      `${command} ${args.join(" ")} failed with ${result.status}: ${result.error?.message || result.stderr || result.stdout}`,
     );
   }
   return { stdout: result.stdout, stderr: result.stderr };
