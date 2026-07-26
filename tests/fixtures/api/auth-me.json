@@ -1,9 +1,15 @@
 {
-  "userId": "user_fixture_123",
-  "tier": "premium",
-  "subscriptionStatus": "active",
-  "features": ["ideas", "history"],
-  "masking": {
-    "premiumMasked": false
-  }
+  "user": {
+    "userTier": "premium",
+    "isLifetimeFree": false,
+    "onboarding": {
+      "completed": true
+    },
+    "features": ["ideas", "history"],
+    "masking": {
+      "premiumMasked": false
+    }
+  },
+  "token": "fixture-token-must-not-be-exposed",
+  "email": "fixture-user@example.invalid"
 }

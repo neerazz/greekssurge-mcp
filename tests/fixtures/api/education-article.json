@@ -1,9 +1,35 @@
 {
-  "id": "edu_1",
   "slug": "covered-calls-basics",
   "title": "Covered Calls Basics",
-  "body": "Sanitized article body for fixture use only.",
-  "publishedAt": "2026-01-10T12:00:00.000Z",
-  "updatedAt": "2026-02-10T12:00:00.000Z",
-  "tier": "free"
+  "description": "Sanitized education article.",
+  "cluster": "options-income",
+  "clusterTitle": "Options Income",
+  "pillar": "income",
+  "updated": "2026-07-20",
+  "readMinutes": 6,
+  "html": "<p>Sanitized article body for fixture use only.</p>",
+  "headings": [
+    {
+      "id": "intro",
+      "text": "Introduction"
+    }
+  ],
+  "faq": [
+    {
+      "q": "Is this advice?",
+      "a": "No, this is educational content."
+    }
+  ],
+  "sources": [
+    {
+      "title": "Options Industry Council",
+      "url": "https://www.optionseducation.org/"
+    }
+  ],
+  "related": [
+    {
+      "slug": "cash-secured-puts",
+      "title": "Cash-Secured Puts"
+    }
+  ]
 }

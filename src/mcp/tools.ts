@@ -1,13 +1,15 @@
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { GreeksSurgeApiError } from "../api/errors.js";
-import type { ListQuery } from "../api/query.js";
+import type { IdeasQuery, TradeHistoryQuery } from "../api/query.js";
 import { toAccountDto, toIdeaDtos, toStatusDto } from "../api/schemas.js";
 import type {
   Account,
   EducationArticle,
   EducationListResponse,
   FiltersResponse,
+  IdeasResponse,
+  MarketStatus,
   PreferencesResponse,
   StatsResponse,
   TradeHistoryResponse,
@@ -17,13 +19,11 @@ import { capArray, envelope, textSummary, toolError } from "./result.js";
 
 export interface ToolClient {
   getAccount(): Promise<Account>;
-  getMarketStatus(): Promise<unknown>;
-  listTradeIdeas(
-    query?: ListQuery,
-  ): Promise<{ items: unknown[]; nextCursor?: string | null }>;
+  getMarketStatus(): Promise<MarketStatus>;
+  listTradeIdeas(query?: IdeasQuery): Promise<IdeasResponse>;
   getAvailableFilters(): Promise<FiltersResponse>;
   getPerformanceStats(): Promise<StatsResponse>;
-  listTradeHistory(query?: ListQuery): Promise<TradeHistoryResponse>;
+  listTradeHistory(query?: TradeHistoryQuery): Promise<TradeHistoryResponse>;
   listEducation(): Promise<EducationListResponse>;
   getEducationArticle(slug: string): Promise<EducationArticle>;
   getWatchlist(): Promise<WatchlistResponse>;
@@ -62,22 +62,36 @@ const annotations = {
   openWorldHint: true,
 } as const;
 
-const emptyInput = z.object({});
-const listInput = z.object({
-  limit: z.number().int().min(1).max(100).optional(),
-  cursor: z.string().min(1).max(256).optional(),
-  ticker: z.string().min(1).max(10).optional(),
-  strategy: z.string().min(1).max(64).optional(),
-  startDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/)
-    .optional(),
-  endDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/)
-    .optional(),
-});
-const articleInput = z.object({ slug: z.string().min(1).max(160) });
+const dateInput = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const emptyInput = z.object({}).strict();
+const ideasInput = z
+  .object({
+    page: z.number().int().min(1).optional(),
+    limit: z.number().int().min(1).max(100).optional(),
+    ticker: z.string().min(1).max(10).optional(),
+    mode: z.string().min(1).max(80).optional(),
+    expiry: dateInput.optional(),
+    iv: z.string().min(1).max(80).optional(),
+    roi: z.string().min(1).max(80).optional(),
+    capital: z.string().min(1).max(80).optional(),
+    pop: z.string().min(1).max(80).optional(),
+    purpose: z.string().min(1).max(80).optional(),
+    symbol: z.string().min(1).max(10).optional(),
+    betterEntry: z.boolean().optional(),
+  })
+  .strict();
+const tradeHistoryInput = z
+  .object({
+    page: z.number().int().min(1).optional(),
+    limit: z.number().int().min(1).max(100).optional(),
+    ideaMode: z.string().min(1).max(80).optional(),
+    outcome: z.string().min(1).max(80).optional(),
+    symbol: z.string().min(1).max(10).optional(),
+    from: dateInput.optional(),
+    to: dateInput.optional(),
+  })
+  .strict();
+const articleInput = z.object({ slug: z.string().min(1).max(160) }).strict();
 const outputSchema = z.object({
   source: z.string(),
   retrievedAt: z.string(),
@@ -116,22 +130,23 @@ export function registerGreeksSurgeTools(options: ToolRegistryOptions): void {
     "Read the current GreeksSurge market status.",
     emptyInput,
     false,
-    async (client) =>
-      toStatusDto(
-        (await client.getMarketStatus()) as Parameters<typeof toStatusDto>[0],
-      ),
+    async (client) => toStatusDto(await client.getMarketStatus()),
   );
   add(
     "list_trade_ideas",
     "List tier-scoped GreeksSurge trade ideas.",
-    listInput,
+    ideasInput,
     true,
     async (client, args) => {
-      const response = await client.listTradeIdeas(args as ListQuery);
-      const ideas = toIdeaDtos(response as Parameters<typeof toIdeaDtos>[0]);
+      const response = await client.listTradeIdeas(args as IdeasQuery);
       return {
-        items: capArray(ideas, Number(args.limit ?? 100)),
-        nextCursor: response.nextCursor ?? null,
+        items: capArray(toIdeaDtos(response), Number(args.limit ?? 100)),
+        summary: response.summary,
+        lastSettled: response.lastSettled,
+        pagination: response.pagination,
+        isMarketOpen: response.isMarketOpen,
+        source: response.source,
+        cached: response.cached,
       };
     },
   );
@@ -152,13 +167,13 @@ export function registerGreeksSurgeTools(options: ToolRegistryOptions): void {
   add(
     "list_trade_history",
     "List settled tier-scoped GreeksSurge trade history.",
-    listInput,
+    tradeHistoryInput,
     true,
     async (client, args) => {
-      const response = await client.listTradeHistory(args as ListQuery);
+      const response = await client.listTradeHistory(args as TradeHistoryQuery);
       return {
         ...response,
-        items: capArray(response.items, Number(args.limit ?? 100)),
+        ideas: capArray(response.ideas, Number(args.limit ?? 100)),
       };
     },
   );

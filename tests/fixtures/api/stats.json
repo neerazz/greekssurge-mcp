@@ -1,7 +1,58 @@
 {
-  "asOf": "2026-07-26T10:00:00.000Z",
-  "period": "all_time",
-  "winRate": 0.64,
-  "averageReturnPct": 3.2,
-  "tradeCount": 42
+  "top_performers": [
+    {
+      "ticker": "AAPL",
+      "roi": 2.4
+    }
+  ],
+  "ticker_breakdown": [
+    {
+      "ticker": "AAPL",
+      "count": 3,
+      "premium": 375.5
+    }
+  ],
+  "roi_histogram": [
+    {
+      "bucket": "0-1",
+      "count": 5
+    }
+  ],
+  "greeks_distribution": [
+    {
+      "greek": "delta",
+      "bucket": "0.20-0.30",
+      "count": 4
+    }
+  ],
+  "weekly_calendar": [
+    {
+      "week": "2026-W30",
+      "premium": 500
+    }
+  ],
+  "monthly_performance": [
+    {
+      "month": "2026-07",
+      "premium": 1200,
+      "winRate": 0.75
+    }
+  ],
+  "settled": 12,
+  "total_premium": 2300.25,
+  "open_premium": 410.75,
+  "win_rate": 0.67,
+  "win_streak_current": 3,
+  "win_streak_best": 5,
+  "max_drawdown": -4.2,
+  "otm_signals": 9,
+  "btc_signals": 2,
+  "assigned_signals": 1,
+  "last_settled": [
+    {
+      "id": "trade_fixture_1",
+      "ticker": "AAPL",
+      "outcome": "WIN"
+    }
+  ]
 }

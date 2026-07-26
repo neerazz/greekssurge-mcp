@@ -11,13 +11,7 @@ async function withFixtureApi() {
   const server = createServer((req: IncomingMessage, res: ServerResponse) => {
     if (req.url?.startsWith("/api/status")) {
       res.writeHead(200, { "content-type": "application/json" });
-      res.end(
-        JSON.stringify({
-          market: "open",
-          asOf: "2026-07-26T15:30:00.000Z",
-          timezone: "America/New_York",
-        }),
-      );
+      res.end(JSON.stringify({ isMarketOpen: true }));
       return;
     }
     res.writeHead(404, { "content-type": "application/json" });
@@ -114,7 +108,7 @@ describe("stdio CLI integration", () => {
       const call = await reader.read();
       expect(call).toMatchObject({
         id: 3,
-        result: { structuredContent: { data: { market: "open" } } },
+        result: { structuredContent: { data: { isMarketOpen: true } } },
       });
     } finally {
       proc.kill("SIGTERM");

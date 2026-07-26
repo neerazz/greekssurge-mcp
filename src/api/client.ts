@@ -1,5 +1,10 @@
 import { GreeksSurgeApiError, mapHttpStatus } from "./errors.js";
-import { buildListQuery, type ListQuery } from "./query.js";
+import {
+  buildIdeasQuery,
+  buildTradeHistoryQuery,
+  type IdeasQuery,
+  type TradeHistoryQuery,
+} from "./query.js";
 import {
   parseUpstream,
   type ParsedUpstream,
@@ -52,12 +57,12 @@ export class GreeksSurgeClient {
   }
 
   async listTradeIdeas(
-    query: ListQuery = {},
+    query: IdeasQuery = {},
   ): Promise<ParsedUpstream<"ideas">> {
     return this.requestJson(
       "GET",
       "/api/ideas",
-      buildListQuery(query),
+      buildIdeasQuery(query),
       "ideas",
     );
   }
@@ -72,22 +77,17 @@ export class GreeksSurgeClient {
     return this.requestJson("GET", "/api/stats", undefined, "stats");
   }
 
-  async listHistory(query: ListQuery = {}): Promise<ParsedUpstream<"history">> {
-    return this.requestJson(
-      "GET",
-      "/api/history",
-      buildListQuery(query),
-      "history",
-    );
+  async listHistory(): Promise<ParsedUpstream<"history">> {
+    return this.requestJson("GET", "/api/history", undefined, "history");
   }
 
   async listTradeHistory(
-    query: ListQuery = {},
+    query: TradeHistoryQuery = {},
   ): Promise<ParsedUpstream<"tradeHistory">> {
     return this.requestJson(
       "GET",
       "/api/trade-history",
-      buildListQuery(query),
+      buildTradeHistoryQuery(query),
       "tradeHistory",
     );
   }
@@ -120,13 +120,18 @@ export class GreeksSurgeClient {
   }
 
   async getWatchlist(): Promise<ParsedUpstream<"watchlist">> {
-    return this.requestJson("GET", "/api/watchlist", undefined, "watchlist");
+    return this.requestJson(
+      "GET",
+      "/api/user/watchlist",
+      undefined,
+      "watchlist",
+    );
   }
 
   async getPreferences(): Promise<ParsedUpstream<"preferences">> {
     return this.requestJson(
       "GET",
-      "/api/preferences",
+      "/api/user/preferences",
       undefined,
       "preferences",
     );

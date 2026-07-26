@@ -1,6 +1,5 @@
 {
-  "emailNotifications": false,
-  "defaultStrategy": "covered_call",
-  "riskLevel": "moderate",
-  "updatedAt": "2026-07-26T10:00:00.000Z"
+  "watchlistIdeasOnly": true,
+  "watchlistAlertsOnly": false,
+  "theme": "system"
 }

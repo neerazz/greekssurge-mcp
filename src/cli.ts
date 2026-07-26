@@ -127,13 +127,14 @@ async function authCommand(
   }
   if (subcommand === "login") {
     if (args.includes("--dry-run")) {
+      const loginUrl = new URL("/api/auth/google", config.apiBaseUrl);
       stdout(
-        "Dry run: would open an installed Chromium browser to complete GreeksSurge Google login. Google credentials are never collected.\n",
+        `Dry run: would open an installed Chromium browser to ${loginUrl.toString()} to complete GreeksSurge Google login. Google credentials are never collected.\n`,
       );
       return 0;
     }
     const result = await runLocalLogin({
-      loginUrl: new URL("/login", config.apiBaseUrl),
+      loginUrl: new URL("/api/auth/google", config.apiBaseUrl),
       store,
       launchBrowser: undefined,
       waitForToken: undefined,

@@ -27,31 +27,66 @@ describe("GreeksSurge upstream schemas", () => {
   ] as const;
 
   it.each(cases)(
-    "accepts the sanitized %s fixture",
+    "accepts the sanitized production-shaped %s fixture",
     async (schemaName, fileName) => {
       const parsed = upstreamSchemas[schemaName].parse(await fixture(fileName));
       expect(parsed).toBeTruthy();
     },
   );
 
-  it("strips undeclared sensitive upstream fields instead of exposing them", async () => {
-    const raw = {
-      ...(await fixture("auth-me")),
-      email: "person@example.com",
-      token: "secret-token",
-      rawPremiumPayload: "not-for-redistribution",
-    };
+  it("accepts either wrapped or direct auth user payloads without exposing token or email", async () => {
+    const wrapped = parseUpstream("authMe", await fixture("auth-me"));
+    const direct = parseUpstream("authMe", {
+      userTier: "premium",
+      isLifetimeFree: true,
+      onboarding: { completed: true },
+      email: "direct-user@example.invalid",
+      token: "direct-token",
+    });
 
-    const parsed = parseUpstream("authMe", raw);
-
-    expect(JSON.stringify(parsed)).not.toContain("person@example.com");
-    expect(JSON.stringify(parsed)).not.toContain("secret-token");
-    expect(JSON.stringify(parsed)).not.toContain("not-for-redistribution");
+    expect(toAccountDto(wrapped)).toMatchObject({
+      tier: "premium",
+      isLifetimeFree: false,
+    });
+    expect(toAccountDto(direct)).toMatchObject({
+      tier: "premium",
+      isLifetimeFree: true,
+    });
+    expect(JSON.stringify({ wrapped, direct })).not.toContain(
+      "@example.invalid",
+    );
+    expect(JSON.stringify({ wrapped, direct })).not.toContain("token");
   });
 
-  it("raises endpoint-specific drift errors when required keys change", async () => {
+  it("rejects the fictional Phase A fixture shapes that used to keep tests green", async () => {
+    const fiction = (await fixture("fictional-phase-a")) as Record<
+      string,
+      unknown
+    >;
+    const fictionCases = [
+      ["status", "status"],
+      ["authMe", "authMe"],
+      ["ideas", "ideas"],
+      ["filters", "filters"],
+      ["stats", "stats"],
+      ["history", "history"],
+      ["tradeHistory", "tradeHistory"],
+      ["educationList", "educationList"],
+      ["educationArticle", "educationArticle"],
+      ["watchlist", "watchlist"],
+      ["preferences", "preferences"],
+    ] as const;
+
+    for (const [schemaName, key] of fictionCases) {
+      expect(() => parseUpstream(schemaName, fiction[key])).toThrow(
+        new RegExp(`Upstream contract changed for ${schemaName}`),
+      );
+    }
+  });
+
+  it("raises endpoint-specific drift errors when production core keys change", async () => {
     const raw = await fixture("status");
-    delete (raw as Record<string, unknown>).market;
+    delete (raw as Record<string, unknown>).isMarketOpen;
 
     expect(() => parseUpstream("status", raw)).toThrow(
       /Upstream contract changed for status/,
@@ -69,21 +104,26 @@ describe("GreeksSurge upstream schemas", () => {
 
     expect(account).toEqual({
       tier: "premium",
-      subscriptionStatus: "active",
+      isLifetimeFree: false,
+      onboarding: { completed: true },
       features: ["ideas", "history"],
       premiumMasked: false,
     });
     expect(status).toMatchObject({
-      market: "open",
+      isMarketOpen: true,
       source: "https://csp.greekssurge.com",
     });
     expect(ideas[0]).toMatchObject({
-      id: "idea_1",
+      id: "idea_fixture_1",
       ticker: "AAPL",
-      isMasked: false,
+      ideaMode: "COVERED_CALL",
+      isFree: false,
     });
     expect(JSON.stringify({ account, status, ideas })).not.toContain(
-      "user_fixture_123",
+      "fixture-token-must-not-be-exposed",
+    );
+    expect(JSON.stringify({ account, status, ideas })).not.toContain(
+      "fixture-user@example.invalid",
     );
   });
 });

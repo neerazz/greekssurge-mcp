@@ -1,25 +1,97 @@
 import { GreeksSurgeApiError } from "./errors.js";
 
-export interface ListQuery {
+export interface IdeasQuery {
+  page?: number;
   limit?: number;
-  cursor?: string;
   ticker?: string;
-  strategy?: string;
-  startDate?: string;
-  endDate?: string;
+  mode?: string;
+  expiry?: string;
+  iv?: string;
+  roi?: string;
+  capital?: string;
+  pop?: string;
+  purpose?: string;
+  symbol?: string;
+  betterEntry?: boolean;
 }
 
-const allowedKeys = new Set([
+export interface TradeHistoryQuery {
+  page?: number;
+  limit?: number;
+  ideaMode?: string;
+  outcome?: string;
+  symbol?: string;
+  from?: string;
+  to?: string;
+}
+
+export type ListQuery = IdeasQuery;
+
+const ideasKeys = new Set([
+  "page",
   "limit",
-  "cursor",
   "ticker",
-  "strategy",
-  "startDate",
-  "endDate",
+  "mode",
+  "expiry",
+  "iv",
+  "roi",
+  "capital",
+  "pop",
+  "purpose",
+  "symbol",
+  "betterEntry",
+]);
+const tradeHistoryKeys = new Set([
+  "page",
+  "limit",
+  "ideaMode",
+  "outcome",
+  "symbol",
+  "from",
+  "to",
 ]);
 const tickerPattern = /^[A-Z][A-Z0-9.]{0,9}$/;
 
-export function buildListQuery(input: ListQuery = {}): URLSearchParams {
+export function buildIdeasQuery(input: IdeasQuery = {}): URLSearchParams {
+  rejectUnsupportedKeys(input as Record<string, unknown>, ideasKeys);
+  const params = new URLSearchParams();
+  appendPageLimit(params, input.page, input.limit);
+  appendTicker(params, "ticker", input.ticker);
+  appendToken(params, "mode", input.mode, 80);
+  appendDate(params, "expiry", input.expiry);
+  appendToken(params, "iv", input.iv, 80);
+  appendToken(params, "roi", input.roi, 80);
+  appendToken(params, "capital", input.capital, 80);
+  appendToken(params, "pop", input.pop, 80);
+  appendToken(params, "purpose", input.purpose, 80);
+  appendTicker(params, "symbol", input.symbol);
+  if (input.betterEntry !== undefined)
+    params.set("betterEntry", String(input.betterEntry));
+  return params;
+}
+
+export function buildTradeHistoryQuery(
+  input: TradeHistoryQuery = {},
+): URLSearchParams {
+  rejectUnsupportedKeys(input as Record<string, unknown>, tradeHistoryKeys);
+  const params = new URLSearchParams();
+  appendPageLimit(params, input.page, input.limit);
+  appendToken(params, "ideaMode", input.ideaMode, 80);
+  appendToken(params, "outcome", input.outcome, 80);
+  appendTicker(params, "symbol", input.symbol);
+  appendDate(params, "from", input.from);
+  appendDate(params, "to", input.to);
+  return params;
+}
+
+export function buildListQuery(input: IdeasQuery = {}): URLSearchParams {
+  return buildIdeasQuery(input);
+}
+
+function rejectUnsupportedKeys(
+  input: Record<string, unknown>,
+  allowedKeys: Set<string>,
+) {
   for (const key of Object.keys(input)) {
     if (!allowedKeys.has(key))
       throw new GreeksSurgeApiError(
@@ -27,34 +99,62 @@ export function buildListQuery(input: ListQuery = {}): URLSearchParams {
         `Unsupported query key: ${key}`,
       );
   }
-
-  const params = new URLSearchParams();
-  const limit =
-    input.limit === undefined
-      ? undefined
-      : Math.min(Math.max(Math.trunc(input.limit), 1), 100);
-  if (limit !== undefined) params.set("limit", String(limit));
-  if (input.cursor) params.set("cursor", input.cursor.slice(0, 256));
-  if (input.ticker) {
-    const normalized = input.ticker.toUpperCase();
-    if (!tickerPattern.test(normalized))
-      throw new GreeksSurgeApiError("INVALID_QUERY", "Invalid ticker.");
-    params.set("ticker", normalized);
-  }
-  if (input.strategy) params.set("strategy", input.strategy.slice(0, 64));
-  if (input.startDate)
-    params.set("startDate", validateDate(input.startDate, "startDate"));
-  if (input.endDate)
-    params.set("endDate", validateDate(input.endDate, "endDate"));
-  return params;
 }
 
-function validateDate(value: string, name: string): string {
+function appendPageLimit(
+  params: URLSearchParams,
+  page: number | undefined,
+  limit: number | undefined,
+) {
+  if (page !== undefined) {
+    const normalized = Math.trunc(page);
+    if (!Number.isFinite(normalized) || normalized < 1)
+      throw new GreeksSurgeApiError("INVALID_QUERY", "Invalid page.");
+    params.set("page", String(normalized));
+  }
+  if (limit !== undefined) {
+    if (!Number.isFinite(limit))
+      throw new GreeksSurgeApiError("INVALID_QUERY", "Invalid limit.");
+    params.set("limit", String(Math.min(Math.max(Math.trunc(limit), 1), 100)));
+  }
+}
+
+function appendTicker(
+  params: URLSearchParams,
+  key: "ticker" | "symbol",
+  value: string | undefined,
+) {
+  if (!value) return;
+  const normalized = value.toUpperCase();
+  if (!tickerPattern.test(normalized))
+    throw new GreeksSurgeApiError("INVALID_QUERY", `Invalid ${key}.`);
+  params.set(key, normalized);
+}
+
+function appendToken(
+  params: URLSearchParams,
+  key: string,
+  value: string | undefined,
+  maxLength: number,
+) {
+  if (!value) return;
+  const normalized = value.trim();
+  if (!normalized || normalized.length > maxLength || /[\r\n]/.test(normalized))
+    throw new GreeksSurgeApiError("INVALID_QUERY", `Invalid ${key}.`);
+  params.set(key, normalized);
+}
+
+function appendDate(
+  params: URLSearchParams,
+  key: string,
+  value: string | undefined,
+) {
+  if (!value) return;
   if (
     !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
     Number.isNaN(Date.parse(`${value}T00:00:00.000Z`))
   ) {
-    throw new GreeksSurgeApiError("INVALID_QUERY", `Invalid ${name}.`);
+    throw new GreeksSurgeApiError("INVALID_QUERY", `Invalid ${key}.`);
   }
-  return value;
+  params.set(key, value);
 }

@@ -55,9 +55,7 @@ describe("CLI lifecycle", () => {
     });
     expect(await capture(["auth", "login", "--dry-run"])).toMatchObject({
       code: 0,
-      stdout: expect.stringContaining(
-        "would open an installed Chromium browser",
-      ),
+      stdout: expect.stringContaining("/api/auth/google"),
     });
     expect(await capture(["setup"])).toMatchObject({
       code: 0,

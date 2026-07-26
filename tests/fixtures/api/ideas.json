@@ -1,16 +1,61 @@
 {
-  "items": [
+  "ideas": [
     {
-      "id": "idea_1",
+      "displaySymbol": "AAPL 2026-08-21 150C",
+      "afterHours": false,
+      "alertPremium": 125.5,
+      "blockedCapital": 15000,
+      "createdAt": "2026-07-25T16:00:00.000Z",
+      "dislikes": 1,
+      "expiry": "2026-08-21",
+      "isAssigned": false,
+      "isFree": false,
+      "isLeveraged": false,
+      "isMarketHours": true,
+      "likes": 12,
+      "outcome": "OPEN",
+      "probOtm": 0.72,
+      "roi": 0.84,
+      "shares": 100,
+      "strike": 150,
+      "symbol": "AAPL",
+      "triggerPrice": 154.25,
+      "dateOnly": "2026-07-25",
       "ticker": "AAPL",
-      "strategy": "covered_call",
-      "title": "Covered call example",
-      "summary": "Sanitized educational setup.",
-      "publishedAt": "2026-07-25T12:00:00.000Z",
-      "expiresAt": "2026-08-15T20:00:00.000Z",
-      "tier": "premium",
-      "isMasked": false
+      "id": "idea_fixture_1",
+      "capital": 15000,
+      "buffer": 3.5,
+      "capturedRoi": null,
+      "realizedRoi": null,
+      "decayProfit": 42.1,
+      "companyName": "Example Apple Inc.",
+      "optionSymbol": "AAPL260821C00150000",
+      "executiveBrief": "Sanitized educational setup summary; no premium production text.",
+      "orderStatus": "OPEN",
+      "ideaMode": "COVERED_CALL"
     }
   ],
-  "nextCursor": null
+  "summary": {
+    "total": 1,
+    "open": 1,
+    "avgRoi": 0.84
+  },
+  "lastSettled": [
+    {
+      "id": "settled_fixture_1",
+      "ticker": "MSFT",
+      "outcome": "WIN",
+      "realizedRoi": 1.1,
+      "closeDate": "2026-07-18"
+    }
+  ],
+  "pagination": {
+    "total": 1,
+    "page": 1,
+    "limit": 25,
+    "pages": 1
+  },
+  "isMarketOpen": true,
+  "source": "fixture-sanitized-live-shape",
+  "cached": false
 }

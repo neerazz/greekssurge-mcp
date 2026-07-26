@@ -1,0 +1,102 @@
+{
+  "status": {
+    "market": "open",
+    "asOf": "2026-07-26T15:30:00.000Z",
+    "timezone": "America/New_York"
+  },
+  "ideas": {
+    "items": [
+      {
+        "id": "idea_1",
+        "ticker": "AAPL",
+        "strategy": "covered_call",
+        "title": "Covered call example",
+        "summary": "Fictional setup",
+        "publishedAt": "2026-07-25T12:00:00.000Z",
+        "tier": "premium",
+        "isMasked": false
+      }
+    ],
+    "nextCursor": null
+  },
+  "filters": {
+    "tickers": ["AAPL"],
+    "strategies": ["covered_call"],
+    "expirations": ["2026-08-21"],
+    "updatedAt": "2026-07-26T10:00:00.000Z"
+  },
+  "stats": {
+    "asOf": "2026-07-26T10:00:00.000Z",
+    "period": "all_time",
+    "winRate": 0.64,
+    "averageReturnPct": 3.2,
+    "tradeCount": 42
+  },
+  "history": {
+    "items": [
+      {
+        "id": "hist_1",
+        "ticker": "MSFT",
+        "strategy": "cash_secured_put",
+        "openedAt": "2026-05-01T14:00:00.000Z"
+      }
+    ],
+    "nextCursor": null
+  },
+  "tradeHistory": {
+    "items": [
+      {
+        "id": "trade_1",
+        "ticker": "NVDA",
+        "strategy": "spread",
+        "openedAt": "2026-04-01T14:00:00.000Z",
+        "status": "closed"
+      }
+    ],
+    "nextCursor": null
+  },
+  "educationList": {
+    "items": [
+      {
+        "id": "edu_1",
+        "slug": "covered-calls-basics",
+        "title": "Covered Calls Basics",
+        "summary": "Options education overview.",
+        "publishedAt": "2026-01-10T12:00:00.000Z",
+        "tier": "free"
+      }
+    ]
+  },
+  "educationArticle": {
+    "id": "edu_1",
+    "slug": "covered-calls-basics",
+    "title": "Covered Calls Basics",
+    "body": "Body",
+    "publishedAt": "2026-01-10T12:00:00.000Z",
+    "tier": "free"
+  },
+  "watchlist": {
+    "items": [
+      {
+        "ticker": "AAPL",
+        "addedAt": "2026-07-01T12:00:00.000Z"
+      }
+    ],
+    "updatedAt": "2026-07-26T10:00:00.000Z"
+  },
+  "preferences": {
+    "emailNotifications": false,
+    "defaultStrategy": "covered_call",
+    "riskLevel": "moderate",
+    "updatedAt": "2026-07-26T10:00:00.000Z"
+  },
+  "authMe": {
+    "userId": "user_fixture_123",
+    "tier": "premium",
+    "subscriptionStatus": "active",
+    "features": ["ideas"],
+    "masking": {
+      "premiumMasked": false
+    }
+  }
+}

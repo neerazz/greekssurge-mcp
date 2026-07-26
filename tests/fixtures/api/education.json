@@ -1,12 +1,21 @@
 {
-  "items": [
+  "pillars": [
     {
-      "id": "edu_1",
       "slug": "covered-calls-basics",
       "title": "Covered Calls Basics",
-      "summary": "Options education overview.",
-      "publishedAt": "2026-01-10T12:00:00.000Z",
-      "tier": "free"
+      "description": "Sanitized education overview.",
+      "cluster": "options-income",
+      "clusterTitle": "Options Income",
+      "pillar": "income",
+      "updated": "2026-07-20",
+      "readMinutes": 6,
+      "posts": [
+        {
+          "slug": "covered-calls-basics",
+          "title": "Covered Calls Basics",
+          "description": "Sanitized post summary."
+        }
+      ]
     }
   ]
 }

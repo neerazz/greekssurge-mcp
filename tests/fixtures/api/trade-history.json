@@ -1,14 +1,33 @@
 {
-  "items": [
+  "summary": {
+    "total": 1,
+    "winRate": 1,
+    "rollingPremium": 125.5
+  },
+  "page": 1,
+  "limit": 25,
+  "totalPages": 1,
+  "total": 1,
+  "ideas": [
     {
-      "id": "trade_1",
-      "ticker": "NVDA",
-      "strategy": "spread",
-      "openedAt": "2026-04-01T14:00:00.000Z",
-      "closedAt": "2026-04-15T14:00:00.000Z",
-      "status": "closed",
-      "pnlPct": 1.8
+      "ticker": "AAPL",
+      "displaySymbol": "AAPL 2026-08-21 150C",
+      "ideaMode": "COVERED_CALL",
+      "strike": 150,
+      "expiry": "2026-08-21",
+      "alertPremium": 125.5,
+      "closePrice": 0.25,
+      "roi": 0.84,
+      "realizedRoi": 0.72,
+      "projectedRoi": 0.84,
+      "capital": 15000,
+      "outcome": "WIN",
+      "premiumCollected": 125.5,
+      "createdAt": "2026-07-01T16:00:00.000Z",
+      "closeDate": "2026-07-15T16:00:00.000Z",
+      "daysHeld": 14,
+      "companyName": "Example Apple Inc.",
+      "id": "trade_fixture_1"
     }
-  ],
-  "nextCursor": null
+  ]
 }

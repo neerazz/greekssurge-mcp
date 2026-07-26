@@ -26,7 +26,7 @@ describe("local login service", () => {
     const validateToken = vi.fn(async () => ({ tier: "premium" }));
 
     const result = await runLocalLogin({
-      loginUrl: new URL("https://csp.greekssurge.com/login"),
+      loginUrl: new URL("https://csp.greekssurge.com/api/auth/google"),
       store,
       launchBrowser: async () => ({ profileDir: "/tmp/profile", close }),
       waitForToken: async () => "site-token",
@@ -43,7 +43,7 @@ describe("local login service", () => {
     const store = new MemoryTokenStore();
     await expect(
       runLocalLogin({
-        loginUrl: new URL("https://csp.greekssurge.com/login"),
+        loginUrl: new URL("https://csp.greekssurge.com/api/auth/google"),
         store,
         launchBrowser: async () => ({
           profileDir: "/tmp/profile",
@@ -62,7 +62,7 @@ describe("local login service", () => {
     const store = new MemoryTokenStore();
     await expect(
       runLocalLogin({
-        loginUrl: new URL("https://csp.greekssurge.com/login"),
+        loginUrl: new URL("https://csp.greekssurge.com/api/auth/google"),
         store,
         launchBrowser: async () => ({
           profileDir: "/tmp/profile",

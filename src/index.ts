@@ -33,8 +33,12 @@ export { GreeksSurgeClient } from "./api/client.js";
 export type { GreeksSurgeClientOptions } from "./api/client.js";
 export { GreeksSurgeApiError, mapHttpStatus } from "./api/errors.js";
 export type { GreeksSurgeErrorCode } from "./api/errors.js";
-export { buildListQuery } from "./api/query.js";
-export type { ListQuery } from "./api/query.js";
+export {
+  buildIdeasQuery,
+  buildListQuery,
+  buildTradeHistoryQuery,
+} from "./api/query.js";
+export type { IdeasQuery, ListQuery, TradeHistoryQuery } from "./api/query.js";
 export { createGreeksSurgeMcpServer } from "./mcp/create-server.js";
 export type { CreateGreeksSurgeMcpServerOptions } from "./mcp/create-server.js";
 export {

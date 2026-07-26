@@ -6,61 +6,120 @@ import { createGreeksSurgeMcpServer } from "../src/mcp/create-server.js";
 
 const source = "https://csp.greekssurge.com";
 
+function liveIdea(index: number) {
+  return {
+    displaySymbol: `AAPL 2026-08-21 ${150 + index}C`,
+    afterHours: false,
+    alertPremium: 125.5,
+    blockedCapital: 15_000,
+    createdAt: "2026-07-26T15:30:00.000Z",
+    dislikes: 0,
+    expiry: "2026-08-21",
+    isAssigned: false,
+    isFree: false,
+    isLeveraged: false,
+    isMarketHours: true,
+    likes: index,
+    outcome: "OPEN",
+    probOtm: 0.72,
+    roi: 0.84,
+    shares: 100,
+    strike: 150 + index,
+    symbol: "AAPL",
+    triggerPrice: 154.25,
+    dateOnly: "2026-07-26",
+    ticker: "AAPL",
+    id: `idea_${index}`,
+    capital: 15_000,
+    buffer: 3.5,
+    capturedRoi: null,
+    realizedRoi: null,
+    decayProfit: 42.1,
+    companyName: "Example Apple Inc.",
+    optionSymbol: "AAPL260821C00150000",
+    executiveBrief: "Sanitized educational setup summary.",
+    orderStatus: "OPEN",
+    ideaMode: "COVERED_CALL",
+  };
+}
+
 function fakeClient(overrides: Record<string, unknown> = {}) {
   return {
     getAccount: async () => ({
-      userId: "fixture-user",
-      tier: "premium",
-      subscriptionStatus: "active",
+      userTier: "premium",
+      isLifetimeFree: false,
+      onboarding: { completed: true },
       features: ["ideas"],
       masking: { premiumMasked: false },
     }),
-    getMarketStatus: async () => ({
-      market: "open",
-      asOf: "2026-07-26T15:30:00.000Z",
-      timezone: "America/New_York",
-    }),
+    getMarketStatus: async () => ({ isMarketOpen: true }),
     listTradeIdeas: async () => ({
-      items: Array.from({ length: 105 }, (_, index) => ({
-        id: `idea_${index}`,
-        ticker: "AAPL",
-        strategy: "covered_call",
-        title: "Idea",
-        summary: "Summary",
-        publishedAt: "2026-07-26T15:30:00.000Z",
-        tier: "premium",
-        isMasked: false,
-      })),
-      nextCursor: null,
+      ideas: Array.from({ length: 105 }, (_, index) => liveIdea(index)),
+      summary: { total: 105 },
+      lastSettled: [],
+      pagination: { total: 105, page: 1, limit: 100, pages: 2 },
+      isMarketOpen: true,
+      source: "fixture-sanitized-live-shape",
+      cached: false,
     }),
     getAvailableFilters: async () => ({
+      expiries: ["2026-08-21"],
       tickers: ["AAPL"],
-      strategies: ["covered_call"],
-      expirations: ["2026-08-21"],
-      updatedAt: "2026-07-26T15:30:00.000Z",
+      volatilities: ["MEDIUM"],
+      rois: ["0-1"],
+      capitals: ["5000-20000"],
+      probOtms: ["70-80"],
+      modes: ["COVERED_CALL"],
+      outcomes: ["OPEN"],
     }),
     getPerformanceStats: async () => ({
-      asOf: "2026-07-26T15:30:00.000Z",
-      period: "all_time",
-      winRate: 0.6,
-      averageReturnPct: 2.5,
-      tradeCount: 10,
+      top_performers: [],
+      ticker_breakdown: [],
+      roi_histogram: [],
+      greeks_distribution: [],
+      weekly_calendar: [],
+      monthly_performance: [],
+      settled: 10,
+      total_premium: 1000,
+      open_premium: 250,
+      win_rate: 0.6,
+      win_streak_current: 2,
+      win_streak_best: 4,
+      max_drawdown: -2.5,
+      otm_signals: 8,
+      btc_signals: 1,
+      assigned_signals: 0,
+      last_settled: [],
     }),
-    listTradeHistory: async () => ({ items: [], nextCursor: null }),
-    listEducation: async () => ({ items: [] }),
+    listTradeHistory: async () => ({
+      summary: { total: 0, winRate: 0, rollingPremium: 0 },
+      page: 1,
+      limit: 100,
+      totalPages: 0,
+      total: 0,
+      ideas: [],
+    }),
+    listEducation: async () => ({ pillars: [] }),
     getEducationArticle: async () => ({
-      id: "edu_1",
       slug: "covered-calls-basics",
       title: "Covered Calls Basics",
-      body: "Body",
-      publishedAt: "2026-01-01T00:00:00.000Z",
-      tier: "free",
+      description: "Sanitized article.",
+      cluster: "options-income",
+      clusterTitle: "Options Income",
+      pillar: "income",
+      updated: "2026-07-20",
+      readMinutes: 6,
+      html: "<p>Body</p>",
+      headings: [],
+      faq: [],
+      sources: [],
+      related: [],
     }),
-    getWatchlist: async () => ({
-      items: [],
-      updatedAt: "2026-07-26T15:30:00.000Z",
+    getWatchlist: async () => ({ tickers: [] }),
+    getPreferences: async () => ({
+      watchlistIdeasOnly: false,
+      watchlistAlertsOnly: false,
     }),
-    getPreferences: async () => ({ updatedAt: "2026-07-26T15:30:00.000Z" }),
     ...overrides,
   };
 }
@@ -129,7 +188,7 @@ describe("GreeksSurge MCP tools", () => {
     expect(result.structuredContent).toMatchObject({
       source,
       disclaimer: expect.stringMatching(/not financial advice/i),
-      data: { market: "open" },
+      data: { isMarketOpen: true },
     });
     expect(result.structuredContent?.retrievedAt).toEqual(expect.any(String));
     expect(result.content[0]).toMatchObject({ type: "text" });
@@ -179,6 +238,24 @@ describe("GreeksSurge MCP tools", () => {
     expect(
       (result.structuredContent?.data as { items: unknown[] }).items,
     ).toHaveLength(100);
+    await client.close();
+    await server.close();
+  });
+
+  it("exposes endpoint-specific query inputs instead of old arbitrary list params", async () => {
+    const { client, server } = await connectedClient({ token: "token" });
+    const tools = await client.listTools();
+    const ideasTool = tools.tools.find(
+      (tool) => tool.name === "list_trade_ideas",
+    );
+    const historyTool = tools.tools.find(
+      (tool) => tool.name === "list_trade_history",
+    );
+
+    expect(JSON.stringify(ideasTool?.inputSchema)).toContain("betterEntry");
+    expect(JSON.stringify(ideasTool?.inputSchema)).not.toContain("strategy");
+    expect(JSON.stringify(historyTool?.inputSchema)).toContain("ideaMode");
+    expect(JSON.stringify(historyTool?.inputSchema)).not.toContain("ticker");
     await client.close();
     await server.close();
   });

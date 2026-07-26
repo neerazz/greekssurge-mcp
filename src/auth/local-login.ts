@@ -83,7 +83,7 @@ export async function validateTokenWithApi(
     minIntervalMs: 0,
   });
   const account = await client.getAccount();
-  return { tier: account.tier };
+  return { tier: account.userTier };
 }
 
 export async function runLocalLogin(

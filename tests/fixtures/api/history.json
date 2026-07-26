@@ -1,14 +1,8 @@
-{
-  "items": [
-    {
-      "id": "hist_1",
-      "ticker": "MSFT",
-      "strategy": "cash_secured_put",
-      "openedAt": "2026-05-01T14:00:00.000Z",
-      "closedAt": "2026-05-18T14:00:00.000Z",
-      "outcome": "profit",
-      "returnPct": 2.1
-    }
-  ],
-  "nextCursor": null
-}
+[
+  {
+    "date": "2026-07-22",
+    "otm": 8,
+    "itm": 2,
+    "premium": 425.5
+  }
+]

@@ -23,25 +23,32 @@ export interface SourceMetadata {
 
 export interface AccountDto {
   tier: string;
-  subscriptionStatus: string;
+  isLifetimeFree: boolean;
+  onboarding: Record<string, string | number | boolean | null>;
   features: string[];
   premiumMasked: boolean;
 }
 
 export interface MarketStatusDto extends SourceMetadata {
-  market: string;
-  asOf: string;
-  timezone: string;
+  isMarketOpen: boolean;
 }
 
 export interface IdeaDto extends SourceMetadata {
   id: string;
   ticker: string;
-  strategy: string;
-  title: string;
-  summary: string;
-  publishedAt: string;
-  expiresAt?: string;
-  tier: string;
-  isMasked: boolean;
+  displaySymbol: string;
+  companyName: string;
+  ideaMode: string;
+  expiry: string;
+  strike: number;
+  roi: number;
+  probOtm: number;
+  alertPremium: number;
+  capital: number;
+  buffer: number;
+  isFree: boolean;
+  isAssigned: boolean;
+  outcome: string | null;
+  orderStatus: string;
+  createdAt: string;
 }
