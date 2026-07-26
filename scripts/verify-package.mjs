@@ -44,6 +44,16 @@ function inspectTarball(path) {
 }
 
 function verifyTarballContents(contents) {
+  const retiredBuildPrefixes = [
+    "package/dist/auth/cdp",
+    "package/dist/auth/browser-paths",
+  ];
+  const retired = contents.find((entry) =>
+    retiredBuildPrefixes.some((prefix) => entry.startsWith(prefix)),
+  );
+  if (retired)
+    throw new Error(`Tarball contains retired build output: ${retired}`);
+
   const allowed = contents.every((entry) => {
     if (entry === "package/package.json") return true;
     if (entry === "package/README.md") return true;

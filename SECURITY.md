@@ -10,11 +10,11 @@ Hosted Streamable HTTP/OAuth is not shipped because `csp.greekssurge.com` lacks 
 
 No Google password collection. The CLI never prompts for, stores, proxies, or logs a Google password.
 
-`npx -y greekssurge-mcp auth login` launches an installed Chromium-family browser with a dedicated temporary Chromium profile and a loopback-only DevTools port. The user completes the normal GreeksSurge Google OAuth flow in that browser profile.
+`npx -y greekssurge-mcp auth login` opens GreeksSurge in the operating system default browser. The CLI does not launch or instrument a dedicated browser and does not read browser storage, cookies, passwords, profiles, or sessions.
 
-After login returns to GreeksSurge, the CLI connects to that temporary profile over CDP and performs an exact-origin localStorage read only for `https://csp.greekssurge.com`. It does not read arbitrary origins, cookies, passwords, saved browser profiles, or the user's default browser data.
+Before opening the browser, the CLI binds a random-port `127.0.0.1 loopback` callback. The authorization request carries an unpredictable state value and `S256 PKCE` challenge. GreeksSurge must return only a short-lived, single-use authorization code to that callback; bearer tokens must never appear in a browser or loopback URL. The CLI exchanges the code directly with `/api/auth/mcp/token` using the PKCE verifier.
 
-The captured token is validated through the GreeksSurge `/api/auth/me` endpoint before it is written. If validation fails, nothing is stored.
+The exchanged token is validated through the GreeksSurge `/api/auth/me` endpoint before it is written. If exchange or validation fails, nothing is stored. Production authentication remains unavailable until GreeksSurge deploys the matching authorize/token backend contract.
 
 ## Local token storage
 

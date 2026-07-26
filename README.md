@@ -16,7 +16,11 @@ Prerequisite: Node.js 20+.
 npx -y greekssurge-mcp auth login
 ```
 
-The login command opens GreeksSurge in a dedicated temporary Chromium profile. Complete Google login there. The CLI never asks for or collects your Google password.
+The login command opens GreeksSurge in your operating system default browser. It returns through a random-port `127.0.0.1` loopback callback protected by state and S256 PKCE. The CLI never asks for your Google password, reads browser storage, or asks you to copy a token.
+
+This login path requires the GreeksSurge backend to expose `/api/auth/mcp/authorize` and `/api/auth/mcp/token`. Do not treat authentication as available until those endpoints are deployed and the production smoke test passes.
+
+Backend implementation and abuse-test contract: [docs/upstream-oauth-contract.md](https://github.com/neerazz/greekssurge-mcp/blob/main/docs/upstream-oauth-contract.md).
 
 2. Add the local stdio server to your MCP client:
 
@@ -28,14 +32,14 @@ Use the client-specific command or JSON from the setup docs below.
 
 3. Verify the connection from your MCP client by calling `get_account`.
 
-Until npm publication, use this GitHub-package fallback explicitly in the same command position:
+The canonical package is published on npm. If npm is unavailable, use the matching GitHub release explicitly in the same command position:
 
 ```sh
 npx -y github:neerazz/greekssurge-mcp#v0.1.0 auth login
 npx -y github:neerazz/greekssurge-mcp#v0.1.0
 ```
 
-The GitHub fallback is labeled fallback-only until npm publication; after npm publication the canonical package spec is `greekssurge-mcp`.
+The canonical package spec is `greekssurge-mcp`; the GitHub form is fallback-only.
 
 ## Client setup docs
 
@@ -78,9 +82,9 @@ All tools are read-only and return structured content with source, retrieval tim
 ## Security and privacy summary
 
 - No Google password collection.
-- Local login uses a dedicated temporary Chromium profile.
-- The CLI reads the GreeksSurge token only from exact-origin `localStorage` after Google login returns to `https://csp.greekssurge.com`.
-- Captured tokens are validated against `/api/auth/me` before storage.
+- Local login uses the operating system default browser and an exact random-port `127.0.0.1/callback` redirect.
+- State and S256 PKCE bind the browser request to the CLI; only a short-lived, one-time code returns through the browser.
+- Exchanged tokens are validated against `/api/auth/me` before storage.
 - Tokens are stored per OS under the local user profile with POSIX `0600` permissions on macOS/Linux and user-scoped Windows ACLs on Windows.
 - `greekssurge-mcp auth logout` deletes the local token; revoke the upstream GreeksSurge/Google session if a device or token leaks.
 - Returned article text is treated as untrusted external content, never instructions.

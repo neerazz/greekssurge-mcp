@@ -10,14 +10,14 @@ npm --version
 npx -y greekssurge-mcp --version
 ```
 
-Until npm publication, use the GitHub-package fallback explicitly:
+If npm is unavailable, use the matching GitHub release explicitly:
 
 ```sh
 npx -y github:neerazz/greekssurge-mcp#v0.1.0 --version
 npx -y github:neerazz/greekssurge-mcp#v0.1.0 auth login
 ```
 
-This fallback is only until npm publication. After npm publication, use `npx -y greekssurge-mcp`.
+The canonical published command is `npx -y greekssurge-mcp`; the GitHub form is fallback-only.
 
 ## Authentication times out
 
@@ -27,9 +27,9 @@ Run:
 npx -y greekssurge-mcp auth login
 ```
 
-Complete Google login in the Chromium window opened by the CLI. Do not paste a token into your MCP client config. The CLI does not collect your Google password.
+Complete Google login and the GreeksSurge authorization confirmation in your operating system default browser. Do not paste a token into your MCP client config. The CLI does not collect your Google password or read browser storage.
 
-If the browser does not open, install Chrome/Chromium/Edge or set `BROWSER_EXECUTABLE` to an installed Chromium-family browser.
+If the browser does not open, verify the operating system can open an HTTPS link with its configured default browser. If the CLI reports an authorization-endpoint or code-exchange error, the required `/api/auth/mcp/authorize` and `/api/auth/mcp/token` backend contract is not deployed; retrying or changing browsers will not fix that server-side blocker.
 
 ## Client connects but authenticated tools fail
 

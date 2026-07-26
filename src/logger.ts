@@ -11,9 +11,11 @@ const JWT_PATTERN = /eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g;
 const EMAIL_PATTERN = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
 const AUTH_PATTERN = /(Authorization\s*[:=]\s*)(?:Bearer\s+)?[^\s,"}]+/gi;
 const QUERY_TOKEN_PATTERN =
-  /([?&](?:access_token|token|gs_token|id_token|refresh_token)=)[^&\s]+/gi;
+  /([?&](?:access_token|token|gs_token|id_token|refresh_token|state|code|code_verifier|code_challenge)=)[^&\s]+/gi;
 const KV_TOKEN_PATTERN =
-  /\b((?:gs_token|access_token|refresh_token|id_token|token)\s*[=:]\s*)[^&\s,"}]+/gi;
+  /\b((?:gs_token|access_token|refresh_token|id_token|token|state|code|code_verifier|code_challenge)\s*[=:]\s*)[^&\s,"}]+/gi;
+const SECRET_KEY_PATTERN =
+  /(?:authorization|cookie|secret|password|token)|^(?:state|code|codeVerifier|codeChallenge)$/i;
 
 export function redactSecrets(input: unknown): string {
   return String(input)
@@ -32,7 +34,7 @@ function redactObject(value: unknown): unknown {
   if (value && typeof value === "object") {
     return Object.fromEntries(
       Object.entries(value as Record<string, unknown>).map(([key, entry]) => {
-        if (/authorization|token|cookie|secret|password/i.test(key)) {
+        if (SECRET_KEY_PATTERN.test(key)) {
           return [key, "[REDACTED]"];
         }
         return [key, redactObject(entry)];

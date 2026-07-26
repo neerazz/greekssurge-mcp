@@ -26,8 +26,6 @@ describe("loadConfig", () => {
       PORT: "8088",
       ALLOWED_HOSTS: "localhost,example.test",
       GREEKSSURGE_TOKEN_PATH: "/tmp/token.json",
-      BROWSER_EXECUTABLE:
-        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
     });
 
     expect(config.apiBaseUrl.toString()).toBe("https://example.test/api-root/");
@@ -37,7 +35,7 @@ describe("loadConfig", () => {
     expect(config.port).toBe(8088);
     expect(config.allowedHosts).toEqual(["localhost", "example.test"]);
     expect(config.tokenPath).toBe("/tmp/token.json");
-    expect(config.browserExecutable).toContain("Google Chrome");
+    expect(config).not.toHaveProperty("browserExecutable");
   });
 
   it("rejects invalid URLs and ports", () => {

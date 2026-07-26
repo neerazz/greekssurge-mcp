@@ -28,7 +28,8 @@ describe("public release documentation", () => {
     expect(readme).toContain("npx -y greekssurge-mcp");
     expect(readme).toMatch(/verify[^\n]+get_account/i);
     expect(readme).toContain("github:neerazz/greekssurge-mcp#v0.1.0");
-    expect(readme).toMatch(/until npm publication/i);
+    expect(readme).toMatch(/published on npm/i);
+    expect(readme).toMatch(/fallback-only/i);
     expect(readme).toContain("https://github.com/neerazz/greekssurge-mcp");
   });
 
@@ -59,8 +60,9 @@ describe("public release documentation", () => {
 
     for (const required of [
       "No Google password collection",
-      "dedicated temporary Chromium profile",
-      "exact-origin localStorage",
+      "operating system default browser",
+      "127.0.0.1 loopback",
+      "S256 PKCE",
       "/api/auth/me",
       "macOS: ~/Library/Application Support/greekssurge-mcp/token.json",
       "Linux: ${XDG_CONFIG_HOME:-~/.config}/greekssurge-mcp/token.json",
@@ -73,6 +75,7 @@ describe("public release documentation", () => {
     ]) {
       expect(security).toContain(required);
     }
+    expect(security).not.toMatch(/Chromium|Chrome|CDP|localStorage/i);
   });
 
   it("states read-only boundaries, untrusted-content handling, and licensing split", async () => {
@@ -97,6 +100,7 @@ describe("public release documentation", () => {
     expect(contributing).toContain("npm run prepublishOnly");
     expect(codeOfConduct).toContain("Contributor Covenant");
     expect(troubleshooting).toContain("github:neerazz/greekssurge-mcp#v0.1.0");
-    expect(troubleshooting).toMatch(/until npm publication/i);
+    expect(troubleshooting).toMatch(/canonical published command/i);
+    expect(troubleshooting).toMatch(/fallback-only/i);
   });
 });

@@ -3,11 +3,7 @@ import { realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { GreeksSurgeClient } from "./api/client.js";
 import { FileTokenStore } from "./auth/token-store.js";
-import {
-  launchInstalledChromium,
-  runLocalLogin,
-  validateTokenWithApi,
-} from "./auth/local-login.js";
+import { runLocalLogin, validateTokenWithApi } from "./auth/local-login.js";
 import { createGreeksSurgeMcpServer } from "./mcp/create-server.js";
 import { loadConfig } from "./config.js";
 import { createLogger } from "./logger.js";
@@ -32,7 +28,7 @@ const HELP = `greekssurge-mcp ${VERSION}
 
 Commands:
   greekssurge-mcp [serve]              Start the read-only MCP stdio server
-  greekssurge-mcp auth login           Open GreeksSurge Google login in an isolated installed Chromium profile
+  greekssurge-mcp auth login           Open GreeksSurge Google login in the operating system default browser
   greekssurge-mcp auth status          Show whether a local GreeksSurge token is stored
   greekssurge-mcp auth logout          Delete the local GreeksSurge token
   greekssurge-mcp setup                Print client setup guidance
@@ -85,7 +81,7 @@ export async function runCli(
     }
 
     if (command === "auth")
-      return authCommand(subcommand, rest, env, stdout, stderr);
+      return await authCommand(subcommand, rest, env, stdout, stderr);
     if (command === "setup") {
       const setupArgs = parseSetupArgs(commandArgs);
       if (!setupArgs.ok) {
@@ -161,18 +157,15 @@ async function authCommand(
     )
       return rejectAuthFlags(stderr);
     if (args.includes("--dry-run")) {
-      const loginUrl = new URL("/api/auth/google", config.apiBaseUrl);
+      const loginUrl = new URL("/api/auth/mcp/authorize", config.authIssuerUrl);
       stdout(
-        `Dry run: would open an installed Chromium browser to ${loginUrl.toString()} to complete GreeksSurge Google login. Google credentials are never collected.\n`,
+        `Dry run: would open the operating system default browser to ${loginUrl.toString()} and return through a protected 127.0.0.1 loopback callback. Google credentials are never collected.\n`,
       );
       return 0;
     }
     const result = await runLocalLogin({
-      loginUrl: new URL("/api/auth/google", config.apiBaseUrl),
+      issuerUrl: config.authIssuerUrl,
       store,
-      launchBrowser: (url) =>
-        launchInstalledChromium(url, config.browserExecutable),
-      waitForToken: undefined,
       validateToken: (token) => validateTokenWithApi(config.apiBaseUrl, token),
     });
     stdout(`Authenticated${result.tier ? ` as ${result.tier}` : ""}.\n`);

@@ -64,6 +64,9 @@ describe("package metadata", () => {
       ]),
     );
     expect(pkg.scripts.prepare).toBe("npm run build");
+    expect(pkg.scripts.build).toBe(
+      "node scripts/clean-dist.mjs && tsc -p tsconfig.json",
+    );
     expect(pkg.scripts.prepublishOnly).toBe(
       "npm run format:check && npm run lint && npm run check && npm run test && npm run build && npm run audit:runtime && npm run scan:secrets && npm run pack:check",
     );
@@ -74,7 +77,8 @@ describe("package metadata", () => {
     );
     expect(pkg.dependencies?.["@modelcontextprotocol/sdk"]).toBe("1.29.0");
     expect(pkg.dependencies?.zod).toMatch(/^\^4\./);
-    expect(pkg.dependencies?.ws).toMatch(/^\^8\./);
+    expect(pkg.dependencies).not.toHaveProperty("ws");
+    expect(pkg.devDependencies).not.toHaveProperty("@types/ws");
     expect(pkg.dependencies).not.toHaveProperty("express");
     expect(pkg.dependencies).not.toHaveProperty("express-rate-limit");
   });
@@ -142,5 +146,7 @@ describe("package metadata", () => {
     expect(verifier).toContain("process.env.npm_execpath");
     expect(verifier).toContain(".split(/\\r?\\n/)");
     expect(verifier).not.toContain('"npm.cmd"');
+    expect(verifier).toContain("package/dist/auth/cdp");
+    expect(verifier).toContain("package/dist/auth/browser-paths");
   });
 });

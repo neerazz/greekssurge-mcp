@@ -30,9 +30,30 @@ const syntheticMarkers = [
   "token-like",
   "raw-upstream-secret-must-not-leak",
   "must-be-stripped",
+  "compound-client-secret",
+  "compound-user-password",
+  "compound-session-cookie",
 ];
 
 describe("security invariants", () => {
+  it("removes browser instrumentation and CDP from the shipping authentication path", async () => {
+    const shippingFiles = [
+      ...(await walk("src")).filter((path) => path.endsWith(".ts")),
+      ...releaseTrackedFiles,
+      ...(await walk("docs/clients")).filter((path) => path.endsWith(".md")),
+    ];
+    const corpus = (
+      await Promise.all(shippingFiles.map((path) => readFile(path, "utf8")))
+    ).join("\n");
+    const pkg = JSON.parse(await readFile("package.json", "utf8"));
+
+    expect(corpus).not.toMatch(
+      /Chromium|DevToolsActivePort|\bCDP\b|localStorage|BROWSER_EXECUTABLE|auth\/cdp|browser-paths/i,
+    );
+    expect(pkg.dependencies).not.toHaveProperty("ws");
+    expect(pkg.devDependencies).not.toHaveProperty("@types/ws");
+  });
+
   it("does not contain forbidden mutation, admin, billing, or payment endpoint literals", async () => {
     const srcFiles = (await walk("src")).filter((path) => path.endsWith(".ts"));
     const corpus = (

@@ -4,13 +4,16 @@ import { createLogger, redactSecrets } from "../src/logger.js";
 describe("redactSecrets", () => {
   it("redacts headers, local-storage tokens, JWTs, query tokens, and emails", () => {
     const raw =
-      "Authorization: Bearer abc.def.ghi gs_token=secret-token ?access_token=abc123&email=person@example.com jwt=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.signature";
+      "Authorization: Bearer abc.def.ghi gs_token=secret-token ?access_token=abc123&state=sensitive-state&code=sensitive-code code_verifier=sensitive-verifier&email=person@example.com jwt=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.signature";
 
     const redacted = redactSecrets(raw);
 
     expect(redacted).not.toContain("secret-token");
     expect(redacted).not.toContain("person@example.com");
     expect(redacted).not.toContain("eyJhbGciOiJIUzI1NiJ9");
+    expect(redacted).not.toContain("sensitive-state");
+    expect(redacted).not.toContain("sensitive-code");
+    expect(redacted).not.toContain("sensitive-verifier");
     expect(redacted).toContain("Authorization: [REDACTED]");
     expect(redacted).toContain("gs_token=[REDACTED]");
     expect(redacted).toContain("access_token=[REDACTED]");
@@ -37,6 +40,12 @@ describe("createLogger", () => {
     logger.info("auth failed for person@example.com", {
       Authorization: "Bearer abc.def.ghi",
       url: "https://csp.greekssurge.com/callback?gs_token=private",
+      clientSecret: "compound-client-secret",
+      userPassword: "compound-user-password",
+      sessionCookie: "compound-session-cookie",
+      state: "sensitive-state",
+      code: "sensitive-code",
+      codeVerifier: "sensitive-verifier",
     });
 
     expect(stdout).not.toHaveBeenCalled();
@@ -46,5 +55,11 @@ describe("createLogger", () => {
     expect(line).not.toContain("person@example.com");
     expect(line).not.toContain("private");
     expect(line).not.toContain("abc.def.ghi");
+    expect(line).not.toContain("sensitive-state");
+    expect(line).not.toContain("sensitive-code");
+    expect(line).not.toContain("sensitive-verifier");
+    expect(line).not.toContain("compound-client-secret");
+    expect(line).not.toContain("compound-user-password");
+    expect(line).not.toContain("compound-session-cookie");
   });
 });

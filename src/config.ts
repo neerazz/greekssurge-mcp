@@ -10,7 +10,6 @@ export interface AppConfig {
   port: number;
   allowedHosts: string[];
   tokenPath: string;
-  browserExecutable?: string;
 }
 
 type Env = Record<string, string | undefined>;
@@ -30,6 +29,13 @@ const httpsUrl = (name: string, allowLocalHttp = false) =>
           ctx.addIssue({
             code: "custom",
             message: `${name} must be an HTTPS URL`,
+          });
+          return z.NEVER;
+        }
+        if (url.username || url.password) {
+          ctx.addIssue({
+            code: "custom",
+            message: `${name} must not contain credentials`,
           });
           return z.NEVER;
         }
@@ -61,7 +67,6 @@ const envSchema = z.object({
     )
     .pipe(z.array(z.string().min(1)).min(1)),
   GREEKSSURGE_TOKEN_PATH: z.string().optional(),
-  BROWSER_EXECUTABLE: z.string().optional(),
   XDG_CONFIG_HOME: z.string().optional(),
   APPDATA: z.string().optional(),
   LOCALAPPDATA: z.string().optional(),
@@ -103,6 +108,5 @@ export function loadConfig(env: Env = process.env): AppConfig {
     port: data.PORT,
     allowedHosts: data.ALLOWED_HOSTS,
     tokenPath: data.GREEKSSURGE_TOKEN_PATH ?? defaultTokenPath(env),
-    browserExecutable: data.BROWSER_EXECUTABLE,
   };
 }

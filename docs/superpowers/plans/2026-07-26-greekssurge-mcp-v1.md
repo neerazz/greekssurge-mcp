@@ -4,9 +4,9 @@
 
 **Goal:** Publish one read-only GreeksSurge MCP package that runs locally over stdio and remotely over OAuth-protected Streamable HTTP, with Google-backed GreeksSurge account authentication and verified setup paths for major MCP clients.
 
-**Architecture:** A transport-neutral `McpServer` factory registers one stable tool set over a typed GreeksSurge API adapter. Local mode obtains the existing site token through a user-driven Chrome/CDP login and reads it from a user-only token store; remote mode accepts a per-user bearer token issued by the planned GreeksSurge OAuth 2.1 authorization server and validates it through `/api/auth/me`. stdio and HTTP are thin adapters around the same server/tool registry.
+**Architecture:** A transport-neutral `McpServer` factory registers one stable tool set over a typed GreeksSurge API adapter. Local mode uses the operating system default browser, an ephemeral `127.0.0.1` callback, state, and S256 PKCE to obtain a one-time code; the CLI exchanges and validates the user token before writing it to a user-only token store. Remote mode accepts a per-user bearer token issued by the planned GreeksSurge OAuth 2.1 authorization server and validates it through `/api/auth/me`. stdio and HTTP are thin adapters around the same server/tool registry.
 
-**Tech Stack:** Node.js 20+, TypeScript ESM, `@modelcontextprotocol/sdk@1.29.0`, Zod 4, Express 5, Vitest, `ws` for Chrome DevTools Protocol, npm packaging, GitHub Actions.
+**Tech Stack:** Node.js 20+, TypeScript ESM, `@modelcontextprotocol/sdk@1.29.0`, Zod 4, Vitest, Node HTTP/crypto/child-process primitives, npm packaging, GitHub Actions.
 
 **Approved spec:** `docs/superpowers/specs/2026-07-26-greekssurge-mcp-design.md`
 
@@ -37,7 +37,7 @@
 1. Write a failing metadata test asserting package name `greekssurge-mcp`, Node engine `>=20`, ESM type, `bin.greekssurge-mcp = dist/cli.js`, and that only `dist`, `README.md`, `LICENSE`, and required docs are published.
 2. Run `npm test -- tests/package-metadata.test.ts`; expect failure because metadata is absent.
 3. Add scripts: `build`, `check`, `test`, `test:coverage`, `lint`, `format:check`, `pack:check`, and `start`.
-4. Add runtime dependencies: `@modelcontextprotocol/sdk@1.29.0`, `express@5`, `express-rate-limit`, `ws`, and `zod@4`; add TypeScript/Vitest/ESLint/Prettier type dependencies.
+4. Add runtime dependencies: `@modelcontextprotocol/sdk@1.29.0` and `zod@4`; add TypeScript/Vitest/ESLint/Prettier type dependencies.
 5. Set exports to `./dist/index.js` and bin to `./dist/cli.js`; compile with `tsc` and preserve executable shebang.
 6. Run `npm install`, `npm test`, `npm run build`, and `npm pack --dry-run`; expect all green and no source/tests in the package.
 7. Commit: `chore: scaffold publishable MCP package`.
@@ -65,7 +65,6 @@ export interface AppConfig {
   port: number;
   allowedHosts: string[];
   tokenPath: string;
-  browserExecutable?: string;
 }
 ```
 
@@ -135,33 +134,27 @@ export interface TokenStore {
 5. Run tests on the current OS; add platform-conditional assertions for CI.
 6. Commit: `feat: add user-scoped token storage`.
 
-### Task 6: Implement browser-assisted Google login without Google credential handling
+### Task 6: Implement system-browser native-app authorization without Google credential handling
 
-**Objective:** Use the existing production Google flow and capture only the resulting site token.
+**Objective:** Complete GreeksSurge authorization in the user's normal browser without browser instrumentation, token copying, or Google credential handling.
 
 **Files:**
-- Create: `src/auth/browser-paths.ts`
-- Create: `src/auth/cdp.ts`
+- Create: `src/auth/native-oauth.ts`
+- Create: `src/auth/system-browser.ts`
 - Create: `src/auth/local-login.ts`
-- Create: `tests/browser-paths.test.ts`
-- Create: `tests/cdp.test.ts`
+- Create: `tests/native-oauth.test.ts`
+- Create: `tests/system-browser.test.ts`
 - Create: `tests/local-login.test.ts`
 
 **Steps:**
-1. Write failing tests for Chrome/Edge/Brave discovery on macOS, Windows, and Linux; explicit executable override; missing browser guidance; `DevToolsActivePort` parsing; CDP message correlation; timeout/cancel; and token validation before storage.
-2. Spawn an installed Chromium browser directly, not through WebDriver, using a dedicated profile and `--remote-debugging-port=0`; never pass automation scripts into Google pages.
-3. Read the generated `DevToolsActivePort`, enumerate tabs via `/json/list`, and connect with `ws` to the GreeksSurge tab only.
-4. After the user completes Google login, evaluate only:
-
-```js
-localStorage.getItem('gs_token')
-```
-
-on an origin exactly equal to `https://csp.greekssurge.com`.
-5. Validate the token with `/api/auth/me`, store it atomically, then close only the browser process launched by this command. Never attach to or close the user's normal profile.
-6. Add `auth status` and `auth logout` service functions.
-7. Run unit tests. Run one manual login smoke against production and record only account tier/user ID hash, never token/email.
-8. Commit: `feat: add Google-backed local authentication`.
+1. Write failing tests for OS-default-browser launch, random-port `127.0.0.1` binding, exact callback parsing, state, RFC 7636 S256 vectors, timeout/cancel, hostile token responses, validation-before-storage, and unconditional cleanup.
+2. Bind `http://127.0.0.1:<OS-assigned-port>/callback` before opening the browser. Never bind all interfaces or use a fixed port.
+3. Open `/api/auth/mcp/authorize` through the operating system default browser. Keep state and the PKCE verifier only in CLI memory; do not read browser storage or cookies.
+4. Accept only one matching-state code/error response on the exact callback host/path, then close the listener. Invalid probes must not consume the flow.
+5. Exchange the one-time code through `/api/auth/mcp/token` using the exact redirect URI and verifier. Reject redirects, malformed/oversized responses, and non-Bearer tokens.
+6. Validate the token with `/api/auth/me` before atomic storage. Add `auth status` and `auth logout` service functions.
+7. Run unit and real-socket client integration tests. Keep release blocked until the production backend contract and a human Google-login smoke pass.
+8. Commit: `feat: add system-browser PKCE authentication`.
 
 ### Task 7: Register the transport-neutral MCP tool set
 

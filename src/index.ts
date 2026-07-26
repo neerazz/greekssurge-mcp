@@ -2,31 +2,36 @@ export { runCli } from "./cli.js";
 export type { CliIO } from "./cli.js";
 export { serveStdio } from "./transports/stdio.js";
 export {
-  discoverChromiumExecutable,
-  parseDevToolsActivePort,
-  waitForDevToolsActivePort,
-} from "./auth/browser-paths.js";
-export type {
-  BrowserDiscoveryOptions,
-  DevToolsActivePort,
-} from "./auth/browser-paths.js";
-export {
-  CdpSession,
-  connectCdp,
-  findGreeksSurgeTab,
-  listTabs,
-  readGsTokenFromTab,
-} from "./auth/cdp.js";
-export type { CdpTab, CdpTransport } from "./auth/cdp.js";
-export {
   authLogout,
   authStatus,
-  launchInstalledChromium,
   runLocalLogin,
   validateTokenWithApi,
-  waitForBrowserToken,
 } from "./auth/local-login.js";
-export type { LaunchedBrowser, LocalLoginOptions } from "./auth/local-login.js";
+export type { LocalLoginOptions } from "./auth/local-login.js";
+export {
+  buildAuthorizationUrl,
+  createOAuthState,
+  createPkceChallenge,
+  createPkcePair,
+  exchangeAuthorizationCode,
+  startLoopbackAuthorization,
+} from "./auth/native-oauth.js";
+export type {
+  AuthorizationUrlOptions,
+  ExchangeAuthorizationCodeOptions,
+  LoopbackAuthorization,
+  PkcePair,
+  StartLoopbackAuthorizationOptions,
+} from "./auth/native-oauth.js";
+export {
+  browserOpenCommand,
+  openSystemBrowser,
+} from "./auth/system-browser.js";
+export type {
+  BrowserOpenCommand,
+  OpenSystemBrowserOptions,
+  SpawnProcess,
+} from "./auth/system-browser.js";
 export { FileTokenStore } from "./auth/token-store.js";
 export type { FileTokenStoreOptions, TokenStore } from "./auth/token-store.js";
 export { GreeksSurgeClient } from "./api/client.js";
