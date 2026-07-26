@@ -128,6 +128,7 @@ describe("package metadata", () => {
 
     expect(verifier).toContain('command === "npm"');
     expect(verifier).toContain("process.env.npm_execpath");
+    expect(verifier).toContain(".split(/\\r?\\n/)");
     expect(verifier).not.toContain('"npm.cmd"');
   });
 });

@@ -38,7 +38,7 @@ async function createTarball() {
 
 function inspectTarball(path) {
   return run("tar", ["-tzf", path], { cwd: root })
-    .stdout.split("\n")
+    .stdout.split(/\r?\n/)
     .filter(Boolean)
     .sort();
 }
