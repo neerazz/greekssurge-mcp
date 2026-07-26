@@ -57,6 +57,7 @@ describe("package metadata", () => {
         "format:check",
         "pack:check",
         "scan:secrets",
+        "audit:runtime",
         "prepare",
         "prepublishOnly",
         "start",
@@ -64,10 +65,13 @@ describe("package metadata", () => {
     );
     expect(pkg.scripts.prepare).toBe("npm run build");
     expect(pkg.scripts.prepublishOnly).toBe(
-      "npm run format:check && npm run lint && npm run check && npm run test && npm run build && npm run scan:secrets && npm run pack:check",
+      "npm run format:check && npm run lint && npm run check && npm run test && npm run build && npm run audit:runtime && npm run scan:secrets && npm run pack:check",
     );
     expect(pkg.scripts["scan:secrets"]).toBe("node scripts/scan-secrets.mjs");
     expect(pkg.scripts["pack:check"]).toBe("node scripts/verify-package.mjs");
+    expect(pkg.scripts["audit:runtime"]).toBe(
+      "npm audit --omit=dev --audit-level=high",
+    );
     expect(pkg.dependencies?.["@modelcontextprotocol/sdk"]).toBe("1.29.0");
     expect(pkg.dependencies?.zod).toMatch(/^\^4\./);
     expect(pkg.dependencies?.ws).toMatch(/^\^8\./);
@@ -101,6 +105,7 @@ describe("package metadata", () => {
       "npm run check",
       "npm run test",
       "npm run build",
+      "npm run audit:runtime",
       "npm run scan:secrets",
       "npm run pack:check",
     ])
