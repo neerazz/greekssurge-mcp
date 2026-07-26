@@ -229,9 +229,17 @@ async function sdkSmokeTest(bin, apiUrl, baseEnv) {
 }
 
 function run(command, args, options = {}) {
-  const executable =
-    process.platform === "win32" && command === "npm" ? "npm.cmd" : command;
-  const result = spawnSync(executable, args, {
+  let executable = command;
+  let commandArgs = args;
+  if (process.platform === "win32" && command === "npm") {
+    const npmExecPath = process.env.npm_execpath;
+    if (!npmExecPath) {
+      throw new Error("Cannot locate npm's JavaScript entrypoint on Windows.");
+    }
+    executable = process.execPath;
+    commandArgs = [npmExecPath, ...args];
+  }
+  const result = spawnSync(executable, commandArgs, {
     cwd: options.cwd,
     env: options.env,
     encoding: "utf8",
