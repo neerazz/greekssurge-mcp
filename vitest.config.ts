@@ -1,14 +1,14 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    environment: 'node',
-    include: ['tests/**/*.test.ts'],
+    environment: "node",
+    include: ["tests/**/*.test.ts"],
     restoreMocks: true,
     clearMocks: true,
     coverage: {
-      reporter: ['text', 'lcov'],
-      exclude: ['dist/**', 'tests/**'],
+      reporter: ["text", "lcov"],
+      exclude: ["dist/**", "tests/**"],
     },
   },
 });

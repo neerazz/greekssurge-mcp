@@ -1,5 +1,5 @@
-import type { z } from 'zod';
-import type { upstreamSchemas } from './schemas.js';
+import type { z } from "zod";
+import type { upstreamSchemas } from "./schemas.js";
 
 export type MarketStatus = z.infer<typeof upstreamSchemas.status>;
 export type Account = z.infer<typeof upstreamSchemas.authMe>;
@@ -8,13 +8,15 @@ export type FiltersResponse = z.infer<typeof upstreamSchemas.filters>;
 export type StatsResponse = z.infer<typeof upstreamSchemas.stats>;
 export type HistoryResponse = z.infer<typeof upstreamSchemas.history>;
 export type TradeHistoryResponse = z.infer<typeof upstreamSchemas.tradeHistory>;
-export type EducationListResponse = z.infer<typeof upstreamSchemas.educationList>;
+export type EducationListResponse = z.infer<
+  typeof upstreamSchemas.educationList
+>;
 export type EducationArticle = z.infer<typeof upstreamSchemas.educationArticle>;
 export type WatchlistResponse = z.infer<typeof upstreamSchemas.watchlist>;
 export type PreferencesResponse = z.infer<typeof upstreamSchemas.preferences>;
 
 export interface SourceMetadata {
-  source: 'https://csp.greekssurge.com';
+  source: "https://csp.greekssurge.com";
   retrievedAt: string;
   disclaimer: string;
 }

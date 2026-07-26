@@ -1,14 +1,16 @@
-import { z, ZodError } from 'zod';
-import type { AccountDto, IdeaDto, MarketStatusDto } from './types.js';
+import { z, ZodError } from "zod";
+import type { AccountDto, IdeaDto, MarketStatusDto } from "./types.js";
 
-export const SOURCE_URL = 'https://csp.greekssurge.com' as const;
+export const SOURCE_URL = "https://csp.greekssurge.com" as const;
 export const EDUCATIONAL_DISCLAIMER =
-  'GreeksSurge content is educational information only, not financial advice. Verify market facts independently.';
+  "GreeksSurge content is educational information only, not financial advice. Verify market facts independently.";
 
 const isoDate = z.string().datetime({ offset: true });
 const cursor = z.string().min(1).max(256).nullable().optional();
 const ticker = z.string().regex(/^[A-Z][A-Z0-9.]{0,9}$/);
-const tier = z.enum(['free', 'basic', 'premium', 'pro', 'unknown']).or(z.string().min(1).max(64));
+const tier = z
+  .enum(["free", "basic", "premium", "pro", "unknown"])
+  .or(z.string().min(1).max(64));
 const strategy = z.string().min(1).max(64);
 
 const paged = <T extends z.ZodType>(item: T, max = 100) =>
@@ -119,7 +121,9 @@ export const upstreamSchemas = {
 } as const;
 
 export type UpstreamSchemaName = keyof typeof upstreamSchemas;
-export type ParsedUpstream<TName extends UpstreamSchemaName> = z.infer<(typeof upstreamSchemas)[TName]>;
+export type ParsedUpstream<TName extends UpstreamSchemaName> = z.infer<
+  (typeof upstreamSchemas)[TName]
+>;
 
 export function parseUpstream<TName extends UpstreamSchemaName>(
   schemaName: TName,
@@ -129,17 +133,23 @@ export function parseUpstream<TName extends UpstreamSchemaName>(
     return upstreamSchemas[schemaName].parse(payload) as ParsedUpstream<TName>;
   } catch (error) {
     if (error instanceof ZodError) {
-      throw new Error(`Upstream contract changed for ${schemaName}: ${error.issues[0]?.message ?? 'invalid payload'}`);
+      throw new Error(
+        `Upstream contract changed for ${schemaName}: ${error.issues[0]?.message ?? "invalid payload"}`,
+      );
     }
     throw error;
   }
 }
 
 export function sourceMetadata(retrievedAt = new Date().toISOString()) {
-  return { source: SOURCE_URL, retrievedAt, disclaimer: EDUCATIONAL_DISCLAIMER } as const;
+  return {
+    source: SOURCE_URL,
+    retrievedAt,
+    disclaimer: EDUCATIONAL_DISCLAIMER,
+  } as const;
 }
 
-export function toAccountDto(account: ParsedUpstream<'authMe'>): AccountDto {
+export function toAccountDto(account: ParsedUpstream<"authMe">): AccountDto {
   return {
     tier: account.tier,
     subscriptionStatus: account.subscriptionStatus,
@@ -149,7 +159,7 @@ export function toAccountDto(account: ParsedUpstream<'authMe'>): AccountDto {
 }
 
 export function toStatusDto(
-  status: ParsedUpstream<'status'>,
+  status: ParsedUpstream<"status">,
   retrievedAt?: string,
 ): MarketStatusDto {
   return {
@@ -160,7 +170,10 @@ export function toStatusDto(
   };
 }
 
-export function toIdeaDtos(ideas: ParsedUpstream<'ideas'>, retrievedAt?: string): IdeaDto[] {
+export function toIdeaDtos(
+  ideas: ParsedUpstream<"ideas">,
+  retrievedAt?: string,
+): IdeaDto[] {
   return ideas.items.map((item) => ({
     ...sourceMetadata(retrievedAt),
     id: item.id,

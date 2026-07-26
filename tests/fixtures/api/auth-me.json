@@ -2,10 +2,7 @@
   "userId": "user_fixture_123",
   "tier": "premium",
   "subscriptionStatus": "active",
-  "features": [
-    "ideas",
-    "history"
-  ],
+  "features": ["ideas", "history"],
   "masking": {
     "premiumMasked": false
   }
