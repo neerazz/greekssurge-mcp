@@ -5,7 +5,6 @@ import {
 } from "node:http";
 import { readFile } from "node:fs/promises";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { GreeksSurgeApiError } from "../src/api/errors.js";
 import { GreeksSurgeClient } from "../src/api/client.js";
 
 type Handler = (
@@ -183,6 +182,25 @@ describe("GreeksSurgeClient", () => {
     expect(ifNoneMatch).toBeUndefined();
   });
 
+  it("shares the public cache across client instances in one process", async () => {
+    let calls = 0;
+    const server = await withServer(async (_req, res) => {
+      calls += 1;
+      json(res, 200, await fixture("status"));
+    });
+    cleanups.push(server.close);
+    const options = {
+      baseUrl: server.baseUrl,
+      minIntervalMs: 0,
+      publicCacheTtlMs: 30_000,
+    };
+
+    await new GreeksSurgeClient(options).getMarketStatus();
+    await new GreeksSurgeClient(options).getMarketStatus();
+
+    expect(calls).toBe(1);
+  });
+
   it("uses production ideas query parameters, caps limit, and rejects arbitrary keys", async () => {
     let url = "";
     const server = await withServer(async (req, res) => {
@@ -199,22 +217,25 @@ describe("GreeksSurgeClient", () => {
       page: 2,
       limit: 500,
       ticker: "aapl",
-      mode: "COVERED_CALL",
+      mode: "WEEKLY",
       expiry: "2026-08-21",
-      iv: "MEDIUM",
-      roi: "0-1",
-      capital: "5000-20000",
-      pop: "70-80",
-      purpose: "income",
+      iv: "75-100",
+      roi: "2-4%",
+      capital: "$2-$5k",
+      pop: "80-90%",
+      purpose: "CARDS",
       symbol: "aapl",
       betterEntry: true,
     } as never);
 
     expect(url).toBe(
-      "/api/ideas?page=2&limit=100&ticker=AAPL&mode=COVERED_CALL&expiry=2026-08-21&iv=MEDIUM&roi=0-1&capital=5000-20000&pop=70-80&purpose=income&symbol=AAPL&betterEntry=true",
+      "/api/ideas?page=2&limit=100&ticker=AAPL&mode=WEEKLY&expiry=2026-08-21&iv=75-100&roi=2-4%25&capital=%242-%245k&pop=80-90%25&purpose=CARDS&symbol=AAPL&betterEntry=true",
     );
     await expect(
       client.listTradeIdeas({ strategy: "fictional" } as never),
+    ).rejects.toMatchObject({ code: "INVALID_QUERY" });
+    await expect(
+      client.listTradeIdeas({ mode: "COVERED_CALL" }),
     ).rejects.toMatchObject({ code: "INVALID_QUERY" });
   });
 
@@ -233,18 +254,21 @@ describe("GreeksSurgeClient", () => {
     await client.listTradeHistory({
       page: 3,
       limit: 101,
-      ideaMode: "CASH_SECURED_PUT",
-      outcome: "WIN",
+      ideaMode: "MONTHLY",
+      outcome: "OTM",
       symbol: "msft",
       from: "2026-07-01",
       to: "2026-07-31",
     } as never);
 
     expect(url).toBe(
-      "/api/trade-history?page=3&limit=100&ideaMode=CASH_SECURED_PUT&outcome=WIN&symbol=MSFT&from=2026-07-01&to=2026-07-31",
+      "/api/trade-history?page=3&limit=100&ideaMode=MONTHLY&outcome=OTM&symbol=MSFT&from=2026-07-01&to=2026-07-31",
     );
     await expect(
       client.listTradeHistory({ ticker: "AAPL" } as never),
+    ).rejects.toMatchObject({ code: "INVALID_QUERY" });
+    await expect(
+      client.listTradeHistory({ from: "2026-02-31" }),
     ).rejects.toMatchObject({ code: "INVALID_QUERY" });
   });
 
@@ -278,12 +302,8 @@ describe("GreeksSurgeClient", () => {
     expect(urls).toEqual(["/api/user/watchlist", "/api/user/preferences"]);
   });
 
-  it("does not retry non-idempotent requests", async () => {
-    let calls = 0;
-    const server = await withServer((_req, res) => {
-      calls += 1;
-      json(res, 500, { error: "boom" });
-    });
+  it("rejects arbitrary API paths even through the runtime method", async () => {
+    const server = await withServer((_req, res) => json(res, 200, {}));
     cleanups.push(server.close);
     const client = new GreeksSurgeClient({
       baseUrl: server.baseUrl,
@@ -291,8 +311,38 @@ describe("GreeksSurgeClient", () => {
     });
 
     await expect(
-      client.requestJson("POST", "/api/auth/me", undefined, "authMe"),
-    ).rejects.toBeInstanceOf(GreeksSurgeApiError);
-    expect(calls).toBe(1);
+      (
+        client as unknown as {
+          requestJson(
+            method: "GET",
+            path: string,
+            query: undefined,
+            schema: "status",
+          ): Promise<unknown>;
+        }
+      ).requestJson("GET", "/api/admin/private", undefined, "status"),
+    ).rejects.toMatchObject({ code: "INVALID_QUERY" });
+  });
+
+  it("throttles across client instances sharing one upstream origin", async () => {
+    const requestTimes: number[] = [];
+    const server = await withServer(async (_req, res) => {
+      requestTimes.push(Date.now());
+      json(res, 200, await fixture("status"));
+    });
+    cleanups.push(server.close);
+    const options = {
+      baseUrl: server.baseUrl,
+      minIntervalMs: 30,
+      publicCacheTtlMs: 0,
+    };
+
+    await Promise.all([
+      new GreeksSurgeClient(options).getMarketStatus(),
+      new GreeksSurgeClient(options).getMarketStatus(),
+    ]);
+
+    expect(requestTimes).toHaveLength(2);
+    expect(requestTimes[1]! - requestTimes[0]!).toBeGreaterThanOrEqual(20);
   });
 });

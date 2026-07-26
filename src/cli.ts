@@ -1,8 +1,13 @@
 #!/usr/bin/env node
+import { realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { GreeksSurgeClient } from "./api/client.js";
 import { FileTokenStore } from "./auth/token-store.js";
-import { runLocalLogin, validateTokenWithApi } from "./auth/local-login.js";
+import {
+  launchInstalledChromium,
+  runLocalLogin,
+  validateTokenWithApi,
+} from "./auth/local-login.js";
 import { createGreeksSurgeMcpServer } from "./mcp/create-server.js";
 import { loadConfig } from "./config.js";
 import { createLogger } from "./logger.js";
@@ -38,11 +43,11 @@ export async function runCli(
   const stderr = io.stderr ?? ((text: string) => process.stderr.write(text));
 
   if (args.length === 0) return serveCommand(env, stderr);
-  if (args.includes("--help") || args[0] === "help") {
+  if (args.length === 1 && (args[0] === "--help" || args[0] === "help")) {
     stdout(HELP);
     return 0;
   }
-  if (args.includes("--version")) {
+  if (args.length === 1 && args[0] === "--version") {
     stdout(`${VERSION}\n`);
     return 0;
   }
@@ -52,6 +57,17 @@ export async function runCli(
   const rest = commandArgs.slice(1);
   try {
     if (command === "serve") {
+      if (
+        commandArgs.length !== 0 &&
+        !(
+          commandArgs.length === 2 &&
+          commandArgs[0] === "--transport" &&
+          commandArgs[1]
+        )
+      ) {
+        stderr("Unknown serve flag. Run `greekssurge-mcp --help`.\n");
+        return 2;
+      }
       const transport = valueAfter(commandArgs, "--transport") ?? "stdio";
       if (transport !== "stdio") {
         stderr("HTTP transport is out of Phase A scope. Use stdio locally.\n");
@@ -63,6 +79,10 @@ export async function runCli(
     if (command === "auth")
       return authCommand(subcommand, rest, env, stdout, stderr);
     if (command === "setup") {
+      if (commandArgs.length > 0) {
+        stderr("Unknown setup flag. Run `greekssurge-mcp --help`.\n");
+        return 2;
+      }
       stdout(
         `Add this MCP server to local clients with command: npx -y greekssurge-mcp\nNo GreeksSurge token is written to client configuration; auth stays in the user token store.\n`,
       );
@@ -116,16 +136,23 @@ async function authCommand(
   const config = loadConfig(env);
   const store = new FileTokenStore({ tokenPath: config.tokenPath, env });
   if (subcommand === "status") {
+    if (args.length > 0) return rejectAuthFlags(stderr);
     const token = await store.read();
     stdout(token ? "Authenticated\n" : "Not authenticated\n");
     return token ? 0 : 1;
   }
   if (subcommand === "logout") {
+    if (args.length > 0) return rejectAuthFlags(stderr);
     await store.clear();
     stdout("Logged out; local GreeksSurge token removed.\n");
     return 0;
   }
   if (subcommand === "login") {
+    if (
+      args.some((arg) => arg !== "--dry-run") ||
+      args.filter((arg) => arg === "--dry-run").length > 1
+    )
+      return rejectAuthFlags(stderr);
     if (args.includes("--dry-run")) {
       const loginUrl = new URL("/api/auth/google", config.apiBaseUrl);
       stdout(
@@ -136,7 +163,8 @@ async function authCommand(
     const result = await runLocalLogin({
       loginUrl: new URL("/api/auth/google", config.apiBaseUrl),
       store,
-      launchBrowser: undefined,
+      launchBrowser: (url) =>
+        launchInstalledChromium(url, config.browserExecutable),
       waitForToken: undefined,
       validateToken: (token) => validateTokenWithApi(config.apiBaseUrl, token),
     });
@@ -149,14 +177,33 @@ async function authCommand(
   return 2;
 }
 
+function rejectAuthFlags(stderr: (text: string) => void): number {
+  stderr("Unknown auth flag. Run `greekssurge-mcp --help`.\n");
+  return 2;
+}
+
 function valueAfter(args: string[], flag: string): string | undefined {
   const index = args.indexOf(flag);
   return index === -1 ? undefined : args[index + 1];
 }
 
-const isEntrypoint = process.argv[1]
-  ? fileURLToPath(import.meta.url) === process.argv[1]
-  : false;
+export function isCliEntrypoint(
+  modulePath: string,
+  argvPath: string | undefined,
+  resolvePath: (path: string) => string = realpathSync,
+): boolean {
+  if (!argvPath) return false;
+  try {
+    return resolvePath(modulePath) === resolvePath(argvPath);
+  } catch {
+    return modulePath === argvPath;
+  }
+}
+
+const isEntrypoint = isCliEntrypoint(
+  fileURLToPath(import.meta.url),
+  process.argv[1],
+);
 if (isEntrypoint) {
   runCli().then((code) => {
     if (code !== 0) process.exitCode = code;

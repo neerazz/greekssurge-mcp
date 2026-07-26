@@ -30,22 +30,44 @@
       "decayProfit": 42.1,
       "companyName": "Example Apple Inc.",
       "optionSymbol": "AAPL260821C00150000",
-      "executiveBrief": "Sanitized educational setup summary; no premium production text.",
-      "orderStatus": "OPEN",
+      "executiveBrief": null,
+      "orderStatus": null,
       "ideaMode": "COVERED_CALL"
     }
   ],
   "summary": {
-    "total": 1,
-    "open": 1,
-    "avgRoi": 0.84
+    "total_premium": 125.5,
+    "open_premium": 125.5,
+    "settled": 0,
+    "win_rate": 0,
+    "weekly_calendar": [{ "week": "2026-W30", "premium": 125.5, "count": 1 }],
+    "top_performers": [],
+    "ticker_breakdown": [
+      { "ticker": "AAPL", "count": 1, "otm": 0, "premium": 125.5, "winRate": 0 }
+    ],
+    "roi_histogram": [{ "bucket": "0-1%", "count": 1 }],
+    "greeks_distribution": [{ "range": "0.20-0.30", "count": 1 }],
+    "monthly_performance": [
+      { "month": "2026-07", "winRate": 0, "trades": 1, "sortKey": "2026-07" }
+    ],
+    "win_streak_current": 0,
+    "win_streak_best": 0,
+    "max_drawdown": 0,
+    "otm_signals": 0,
+    "btc_signals": 0,
+    "assigned_signals": 0,
+    "last_settled": []
   },
   "lastSettled": [
     {
-      "id": "settled_fixture_1",
       "ticker": "MSFT",
+      "strike": 400,
+      "expiry": "2026-07-18",
       "outcome": "WIN",
-      "realizedRoi": 1.1,
+      "roi": 1.1,
+      "profit": null,
+      "premium": 110,
+      "daysHeld": 7,
       "closeDate": "2026-07-18"
     }
   ],

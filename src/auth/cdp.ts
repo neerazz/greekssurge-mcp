@@ -2,9 +2,14 @@ import { EventEmitter } from "node:events";
 import WebSocket from "ws";
 
 export interface CdpTransport extends Pick<EventEmitter, "on" | "off"> {
+  readyState?: number;
   send(data: string): void;
   close(): void;
 }
+
+export type CdpTransportFactory = (
+  webSocketDebuggerUrl: string,
+) => CdpTransport;
 
 export interface CdpTab {
   id: string;
@@ -82,10 +87,41 @@ export class CdpSession {
   };
 }
 
-export function connectCdp(webSocketDebuggerUrl: string): CdpSession {
-  return new CdpSession(
-    new WebSocket(webSocketDebuggerUrl) as unknown as CdpTransport,
-  );
+export async function connectCdp(
+  webSocketDebuggerUrl: string,
+  createTransport: CdpTransportFactory = (url) =>
+    new WebSocket(url) as unknown as CdpTransport,
+): Promise<CdpSession> {
+  const transport = createTransport(webSocketDebuggerUrl);
+  if (transport.readyState !== WebSocket.OPEN) {
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          cleanup();
+          reject(new Error("Timed out connecting to Chromium DevTools."));
+        }, 5_000);
+        const onOpen = () => {
+          cleanup();
+          resolve();
+        };
+        const onError = () => {
+          cleanup();
+          reject(new Error("Unable to connect to Chromium DevTools."));
+        };
+        const cleanup = () => {
+          clearTimeout(timeout);
+          transport.off("open", onOpen);
+          transport.off("error", onError);
+        };
+        transport.on("open", onOpen);
+        transport.on("error", onError);
+      });
+    } catch (error) {
+      transport.close();
+      throw error;
+    }
+  }
+  return new CdpSession(transport);
 }
 
 export async function listTabs(

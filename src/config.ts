@@ -63,12 +63,22 @@ const envSchema = z.object({
   GREEKSSURGE_TOKEN_PATH: z.string().optional(),
   BROWSER_EXECUTABLE: z.string().optional(),
   XDG_CONFIG_HOME: z.string().optional(),
+  APPDATA: z.string().optional(),
+  LOCALAPPDATA: z.string().optional(),
   HOME: z.string().optional(),
 });
 
-export function defaultTokenPath(env: Env = process.env): string {
+export function defaultTokenPath(
+  env: Env = process.env,
+  platform: NodeJS.Platform = process.platform,
+): string {
+  const home = env.HOME ?? homedir();
   const configRoot =
-    env.XDG_CONFIG_HOME ?? join(env.HOME ?? homedir(), ".config");
+    platform === "darwin"
+      ? join(home, "Library", "Application Support")
+      : platform === "win32"
+        ? (env.APPDATA ?? env.LOCALAPPDATA ?? join(home, "AppData", "Roaming"))
+        : (env.XDG_CONFIG_HOME ?? join(home, ".config"));
   return join(configRoot, "greekssurge-mcp", "token.json");
 }
 

@@ -1,4 +1,4 @@
-import { mkdtemp } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawn, type ChildProcess } from "node:child_process";
@@ -17,7 +17,7 @@ import { GreeksSurgeClient } from "../api/client.js";
 
 export interface LaunchedBrowser {
   profileDir: string;
-  close(): void;
+  close(): void | Promise<void>;
 }
 
 export interface LocalLoginOptions {
@@ -25,7 +25,7 @@ export interface LocalLoginOptions {
   store: TokenStore;
   launchBrowser?: (loginUrl: URL) => Promise<LaunchedBrowser>;
   waitForToken?: () => Promise<string | undefined>;
-  validateToken?: (token: string) => Promise<{ tier?: string }>;
+  validateToken: (token: string) => Promise<{ tier?: string }>;
   timeoutMs?: number;
 }
 
@@ -39,6 +39,7 @@ export async function launchInstalledChromium(
     browser,
     [
       `--user-data-dir=${profileDir}`,
+      "--remote-debugging-address=127.0.0.1",
       "--remote-debugging-port=0",
       "--no-first-run",
       "--no-default-browser-check",
@@ -46,9 +47,13 @@ export async function launchInstalledChromium(
     ],
     { stdio: "ignore", detached: false },
   );
-  child.unref();
-  await waitForDevToolsActivePort(profileDir);
-  return { profileDir, close: () => closeChild(child) };
+  try {
+    await waitForDevToolsActivePort(profileDir);
+    return { profileDir, close: () => closeChild(child, profileDir) };
+  } catch (error) {
+    await closeChild(child, profileDir);
+    throw error;
+  }
 }
 
 export async function waitForBrowserToken(
@@ -58,15 +63,18 @@ export async function waitForBrowserToken(
   const { port } = await waitForDevToolsActivePort(profileDir);
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    const tab = findGreeksSurgeTab(await listTabs(port));
-    if (tab?.webSocketDebuggerUrl) {
-      const session = connectCdp(tab.webSocketDebuggerUrl);
-      try {
+    let session: Awaited<ReturnType<typeof connectCdp>> | undefined;
+    try {
+      const tab = findGreeksSurgeTab(await listTabs(port));
+      if (tab?.webSocketDebuggerUrl) {
+        session = await connectCdp(tab.webSocketDebuggerUrl);
         const token = await readGsTokenFromTab(session, tab.url);
         if (token) return token;
-      } finally {
-        session.close();
       }
+    } catch {
+      // Authentication redirects replace CDP targets; retry within the deadline.
+    } finally {
+      session?.close();
     }
     await new Promise((resolve) => setTimeout(resolve, 1_000));
   }
@@ -91,6 +99,7 @@ export async function runLocalLogin(
 ): Promise<{ status: "authenticated"; tier?: string }> {
   const launchBrowser = options.launchBrowser ?? launchInstalledChromium;
   const browser = await launchBrowser(options.loginUrl);
+  let browserClosed = false;
   try {
     const token = await (
       options.waitForToken ??
@@ -102,18 +111,18 @@ export async function runLocalLogin(
       );
     let validation: { tier?: string };
     try {
-      validation = await (
-        options.validateToken ?? (async () => ({ tier: undefined }))
-      )(token);
+      validation = await options.validateToken(token);
     } catch {
       throw new Error(
         "Unable to validate the captured GreeksSurge token. Nothing was stored.",
       );
     }
+    await browser.close();
+    browserClosed = true;
     await options.store.write(token);
     return { status: "authenticated", tier: validation.tier };
   } finally {
-    browser.close();
+    if (!browserClosed) await browser.close();
   }
 }
 
@@ -127,6 +136,42 @@ export async function authLogout(store: TokenStore): Promise<void> {
   await store.clear();
 }
 
-function closeChild(child: ChildProcess): void {
-  if (!child.killed) child.kill("SIGTERM");
+async function closeChild(
+  child: ChildProcess,
+  profileDir: string,
+): Promise<void> {
+  if (!hasExited(child)) {
+    const terminated = await signalAndWait(child, "SIGTERM", 2_000);
+    if (!terminated) {
+      const killed = await signalAndWait(child, "SIGKILL", 2_000);
+      if (!killed)
+        throw new Error(
+          "Unable to terminate the Chromium process launched for login.",
+        );
+    }
+  }
+  await rm(profileDir, { recursive: true, force: true });
+}
+
+function hasExited(child: ChildProcess): boolean {
+  return child.exitCode !== null || child.signalCode !== null;
+}
+
+async function signalAndWait(
+  child: ChildProcess,
+  signal: NodeJS.Signals,
+  timeoutMs: number,
+): Promise<boolean> {
+  if (hasExited(child)) return true;
+  return new Promise<boolean>((resolve) => {
+    const onExit = () => finish(true);
+    const timeout = setTimeout(() => finish(hasExited(child)), timeoutMs);
+    const finish = (exited: boolean) => {
+      clearTimeout(timeout);
+      child.off("exit", onExit);
+      resolve(exited);
+    };
+    child.once("exit", onExit);
+    if (!child.kill(signal) && !hasExited(child)) finish(false);
+  });
 }

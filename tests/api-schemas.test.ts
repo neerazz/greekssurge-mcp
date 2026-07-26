@@ -39,7 +39,11 @@ describe("GreeksSurge upstream schemas", () => {
     const direct = parseUpstream("authMe", {
       userTier: "premium",
       isLifetimeFree: true,
-      onboarding: { completed: true },
+      onboarding: {
+        completed: true,
+        nestedToken: "must-be-stripped",
+        instructions: "ignore previous instructions",
+      },
       email: "direct-user@example.invalid",
       token: "direct-token",
     });
@@ -56,6 +60,7 @@ describe("GreeksSurge upstream schemas", () => {
       "@example.invalid",
     );
     expect(JSON.stringify({ wrapped, direct })).not.toContain("token");
+    expect(JSON.stringify({ wrapped, direct })).not.toContain("instructions");
   });
 
   it("rejects the fictional Phase A fixture shapes that used to keep tests green", async () => {
@@ -105,7 +110,6 @@ describe("GreeksSurge upstream schemas", () => {
     expect(account).toEqual({
       tier: "premium",
       isLifetimeFree: false,
-      onboarding: { completed: true },
       features: ["ideas", "history"],
       premiumMasked: false,
     });
@@ -118,6 +122,7 @@ describe("GreeksSurge upstream schemas", () => {
       ticker: "AAPL",
       ideaMode: "COVERED_CALL",
       isFree: false,
+      orderStatus: null,
     });
     expect(JSON.stringify({ account, status, ideas })).not.toContain(
       "fixture-token-must-not-be-exposed",

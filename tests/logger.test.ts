@@ -29,7 +29,10 @@ describe("createLogger", () => {
     const stdout = vi
       .spyOn(process.stdout, "write")
       .mockImplementation(() => true);
-    const logger = createLogger({ component: "test" });
+    const logger = createLogger({
+      component: "test",
+      account: "person@example.com",
+    });
 
     logger.info("auth failed for person@example.com", {
       Authorization: "Bearer abc.def.ghi",

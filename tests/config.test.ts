@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { loadConfig } from "../src/config.js";
+import { defaultTokenPath, loadConfig } from "../src/config.js";
 
 describe("loadConfig", () => {
   it("loads safe defaults for local stdio mode", () => {
@@ -46,5 +46,26 @@ describe("loadConfig", () => {
     ).toThrow(/GREEKSSURGE_API_BASE_URL/);
     expect(() => loadConfig({ PORT: "0" })).toThrow(/PORT/);
     expect(() => loadConfig({ PORT: "not-a-number" })).toThrow(/PORT/);
+  });
+
+  it("uses native per-user config roots on macOS, Windows, and Linux", () => {
+    expect(defaultTokenPath({ HOME: "/Users/person" }, "darwin")).toBe(
+      "/Users/person/Library/Application Support/greekssurge-mcp/token.json",
+    );
+    expect(
+      defaultTokenPath(
+        {
+          HOME: "C:\\Users\\person",
+          APPDATA: "C:\\Users\\person\\AppData\\Roaming",
+        },
+        "win32",
+      ),
+    ).toBe("C:\\Users\\person\\AppData\\Roaming/greekssurge-mcp/token.json");
+    expect(
+      defaultTokenPath(
+        { HOME: "/home/person", XDG_CONFIG_HOME: "/custom/config" },
+        "linux",
+      ),
+    ).toBe("/custom/config/greekssurge-mcp/token.json");
   });
 });

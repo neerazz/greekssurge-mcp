@@ -2,7 +2,7 @@ import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { runCli } from "../src/cli.js";
+import { isCliEntrypoint, runCli } from "../src/cli.js";
 
 async function capture(
   args: string[],
@@ -42,6 +42,25 @@ describe("CLI lifecycle", () => {
     expect(result.code).toBe(2);
     expect(result.stderr).toContain("Unknown command or flag");
     expect(result.stdout).toBe("");
+    expect(await capture(["setup", "--bogus"])).toMatchObject({ code: 2 });
+    expect(await capture(["auth", "status", "--bogus"])).toMatchObject({
+      code: 2,
+    });
+    expect(await capture(["auth", "login", "--bogus"])).toMatchObject({
+      code: 2,
+    });
+  });
+
+  it("recognizes npm .bin symlinks by resolved path", () => {
+    const resolve = (path: string) =>
+      path.includes(".bin") ? "/pkg/dist/cli.js" : path;
+    expect(
+      isCliEntrypoint(
+        "/pkg/dist/cli.js",
+        "/pkg/node_modules/.bin/greekssurge-mcp",
+        resolve,
+      ),
+    ).toBe(true);
   });
 
   it("supports auth status, auth logout, auth login dry-run, and setup dry-run", async () => {

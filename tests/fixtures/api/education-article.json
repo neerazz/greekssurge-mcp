@@ -4,7 +4,7 @@
   "description": "Sanitized education article.",
   "cluster": "options-income",
   "clusterTitle": "Options Income",
-  "pillar": "income",
+  "pillar": true,
   "updated": "2026-07-20",
   "readMinutes": 6,
   "html": "<p>Sanitized article body for fixture use only.</p>",

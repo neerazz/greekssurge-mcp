@@ -15,15 +15,10 @@ const finiteNumber = z.number().finite();
 const nullableNumber = finiteNumber.nullable().optional();
 const booleanDefaultFalse = z.boolean().default(false);
 const id = z.union([boundedString(128), z.number().int()]).transform(String);
-const primitive = z.union([
-  z.string().max(2_000),
-  finiteNumber,
-  z.boolean(),
-  z.null(),
-]);
-const boundedRecord = z
-  .record(z.string().min(1).max(80), primitive)
-  .refine((value) => Object.keys(value).length <= 80, "too many keys");
+const filterOption = z.object({
+  label: boundedString(120),
+  value: boundedString(120),
+});
 
 const pagination = z.object({
   total: z.number().int().nonnegative(),
@@ -35,7 +30,6 @@ const pagination = z.object({
 const authUser = z.object({
   userTier: boundedString(64),
   isLifetimeFree: booleanDefaultFalse,
-  onboarding: boundedRecord.default({}),
   features: z.array(boundedString(80)).max(100).default([]),
   masking: z
     .object({
@@ -75,8 +69,81 @@ const idea = z.object({
   companyName: boundedString(200),
   optionSymbol: boundedString(80),
   executiveBrief: z.string().max(5_000).nullable().optional(),
-  orderStatus: boundedString(80),
+  orderStatus: optionalString(80),
   ideaMode: boundedString(80),
+});
+
+const weeklyCalendarItem = z.object({
+  week: boundedString(40),
+  premium: finiteNumber,
+  count: z.number().int().nonnegative(),
+});
+const topPerformer = z.object({
+  ticker,
+  displaySymbol: boundedString(160),
+  outcome: boundedString(80),
+  expiry: dateString,
+  strike: finiteNumber,
+  alertPremium: finiteNumber,
+  closePrice: nullableNumber,
+  capital: finiteNumber,
+  premiumCollected: finiteNumber,
+  createdAt: timestampString,
+  closeDate: timestampString,
+  daysHeld: z.number().int().nonnegative(),
+  roi: finiteNumber,
+  id,
+});
+const tickerBreakdownItem = z.object({
+  ticker,
+  count: z.number().int().nonnegative(),
+  otm: z.number().int().nonnegative(),
+  premium: finiteNumber,
+  winRate: finiteNumber,
+});
+const histogramItem = z.object({
+  bucket: boundedString(80),
+  count: z.number().int().nonnegative(),
+});
+const greeksDistributionItem = z.object({
+  range: boundedString(80),
+  count: z.number().int().nonnegative(),
+});
+const monthlyPerformanceItem = z.object({
+  month: boundedString(40),
+  winRate: finiteNumber,
+  trades: z.number().int().nonnegative(),
+  sortKey: boundedString(40),
+});
+const settledItem = z.object({
+  ticker,
+  strike: finiteNumber,
+  expiry: dateString,
+  outcome: boundedString(80),
+  roi: finiteNumber,
+  profit: nullableNumber,
+  premium: finiteNumber,
+  daysHeld: z.number().int().nonnegative(),
+  closeDate: timestampString,
+});
+const performanceSummary = z.object({
+  total_premium: finiteNumber,
+  open_premium: finiteNumber,
+  settled: finiteNumber,
+  win_rate: finiteNumber,
+  weekly_calendar: z.array(weeklyCalendarItem).max(500),
+  top_performers: z.array(topPerformer).max(500),
+  ticker_breakdown: z.array(tickerBreakdownItem).max(500),
+  roi_histogram: z.array(histogramItem).max(500),
+  greeks_distribution: z.array(greeksDistributionItem).max(500),
+  monthly_performance: z.array(monthlyPerformanceItem).max(500),
+  win_streak_current: finiteNumber,
+  win_streak_best: finiteNumber,
+  max_drawdown: finiteNumber,
+  otm_signals: finiteNumber,
+  btc_signals: finiteNumber,
+  assigned_signals: finiteNumber,
+  last_settled: z.array(settledItem).max(100),
 });
 
 const tradeHistoryIdea = z.object({
@@ -112,7 +179,7 @@ const educationPillar = z.object({
   description: boundedString(1_000),
   cluster: boundedString(120),
   clusterTitle: boundedString(200),
-  pillar: boundedString(120),
+  pillar: z.boolean(),
   updated: boundedString(80),
   readMinutes: z.number().int().nonnegative(),
   posts: z.array(educationPost).max(100),
@@ -130,8 +197,8 @@ export const upstreamSchemas = {
   }, authUser),
   ideas: z.object({
     ideas: z.array(idea).max(100),
-    summary: boundedRecord,
-    lastSettled: z.array(boundedRecord).max(100),
+    summary: performanceSummary,
+    lastSettled: z.array(settledItem).max(100),
     pagination,
     isMarketOpen: z.boolean(),
     source: boundedString(200),
@@ -140,31 +207,15 @@ export const upstreamSchemas = {
   filters: z.object({
     expiries: z.array(boundedString(40)).max(300),
     tickers: z.array(ticker).max(500),
-    volatilities: z.array(boundedString(80)).max(200),
-    rois: z.array(boundedString(80)).max(200),
-    capitals: z.array(boundedString(80)).max(200),
-    probOtms: z.array(boundedString(80)).max(200),
-    modes: z.array(boundedString(80)).max(200),
-    outcomes: z.array(boundedString(80)).max(200),
+    volatilities: z.array(filterOption).max(200),
+    rois: z.array(filterOption).max(200),
+    capitals: z.array(filterOption).max(200),
+    probOtms: z.array(filterOption).max(200),
+    modes: z.array(filterOption).max(200),
+    outcomes: z.array(filterOption).max(200),
   }),
-  stats: z.object({
-    top_performers: z.array(boundedRecord).max(500),
-    ticker_breakdown: z.array(boundedRecord).max(500),
-    roi_histogram: z.array(boundedRecord).max(500),
-    greeks_distribution: z.array(boundedRecord).max(500),
-    weekly_calendar: z.array(boundedRecord).max(500),
-    monthly_performance: z.array(boundedRecord).max(500),
-    settled: finiteNumber,
+  stats: performanceSummary.omit({ total_premium: true }).extend({
     total_premium: finiteNumber,
-    open_premium: finiteNumber,
-    win_rate: finiteNumber,
-    win_streak_current: finiteNumber,
-    win_streak_best: finiteNumber,
-    max_drawdown: finiteNumber,
-    otm_signals: finiteNumber,
-    btc_signals: finiteNumber,
-    assigned_signals: finiteNumber,
-    last_settled: z.array(boundedRecord).max(500),
   }),
   history: z.array(
     z.object({
@@ -218,12 +269,10 @@ export const upstreamSchemas = {
   watchlist: z.object({
     tickers: z.array(ticker).max(500),
   }),
-  preferences: z
-    .object({
-      watchlistIdeasOnly: z.boolean(),
-      watchlistAlertsOnly: z.boolean(),
-    })
-    .passthrough(),
+  preferences: z.object({
+    watchlistIdeasOnly: z.boolean(),
+    watchlistAlertsOnly: z.boolean(),
+  }),
 } as const;
 
 export type UpstreamSchemaName = keyof typeof upstreamSchemas;
@@ -259,7 +308,6 @@ export function toAccountDto(account: ParsedUpstream<"authMe">): AccountDto {
   return {
     tier: account.userTier,
     isLifetimeFree: account.isLifetimeFree,
-    onboarding: account.onboarding,
     features: account.features,
     premiumMasked: account.masking.premiumMasked,
   };
@@ -296,7 +344,7 @@ export function toIdeaDtos(
     isFree: item.isFree,
     isAssigned: item.isAssigned,
     outcome: item.outcome ?? null,
-    orderStatus: item.orderStatus,
+    orderStatus: item.orderStatus ?? null,
     createdAt: item.createdAt,
   }));
 }

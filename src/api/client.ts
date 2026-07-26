@@ -28,6 +28,20 @@ interface CacheEntry {
 
 const USER_AGENT =
   "greekssurge-mcp/0.1.0 (+https://github.com/neerazz/greekssurge-mcp)";
+const ALLOWED_STATIC_PATHS = new Set([
+  "/api/status",
+  "/api/auth/me",
+  "/api/ideas",
+  "/api/filters",
+  "/api/stats",
+  "/api/history",
+  "/api/trade-history",
+  "/api/education",
+  "/api/user/watchlist",
+  "/api/user/preferences",
+]);
+const nextRequestAtByOrigin = new Map<string, number>();
+const publicCacheByUrl = new Map<string, CacheEntry>();
 
 export class GreeksSurgeClient {
   private readonly fetchImpl: typeof fetch;
@@ -35,8 +49,6 @@ export class GreeksSurgeClient {
   private readonly timeoutMs: number;
   private readonly minIntervalMs: number;
   private readonly publicCacheTtlMs: number;
-  private readonly cache = new Map<string, CacheEntry>();
-  private lastRequestAt = 0;
 
   constructor(private readonly options: GreeksSurgeClientOptions) {
     this.fetchImpl = options.fetchImpl ?? fetch;
@@ -138,7 +150,7 @@ export class GreeksSurgeClient {
   }
 
   async requestJson<TName extends UpstreamSchemaName>(
-    method: "GET" | "POST",
+    method: "GET",
     path: string,
     query: URLSearchParams | undefined,
     schemaName: TName,
@@ -148,7 +160,7 @@ export class GreeksSurgeClient {
     const cacheKey = `${method} ${url.toString()}`;
     const now = Date.now();
     const cached = requestOptions.publicCache
-      ? this.cache.get(cacheKey)
+      ? publicCacheByUrl.get(cacheKey)
       : undefined;
     if (cached && cached.expiresAt > now)
       return cached.value as ParsedUpstream<TName>;
@@ -207,7 +219,7 @@ export class GreeksSurgeClient {
     try {
       const parsed = parseUpstream(schemaName, body);
       if (requestOptions.publicCache) {
-        this.cache.set(cacheKey, {
+        publicCacheByUrl.set(cacheKey, {
           value: parsed,
           etag: response.headers.get("etag") ?? undefined,
           expiresAt: Date.now() + this.publicCacheTtlMs,
@@ -229,7 +241,10 @@ export class GreeksSurgeClient {
   }
 
   private buildUrl(path: string, query?: URLSearchParams): URL {
-    if (!path.startsWith("/api/") || path.includes("..")) {
+    const allowedEducationArticle = /^\/api\/education\/[a-z0-9-]{1,160}$/.test(
+      path,
+    );
+    if (!ALLOWED_STATIC_PATHS.has(path) && !allowedEducationArticle) {
       throw new GreeksSurgeApiError(
         "INVALID_QUERY",
         "Unsupported GreeksSurge API path.",
@@ -241,9 +256,12 @@ export class GreeksSurgeClient {
   }
 
   private async throttle(): Promise<void> {
+    if (this.minIntervalMs <= 0) return;
     const now = Date.now();
-    const waitMs = Math.max(0, this.lastRequestAt + this.minIntervalMs - now);
+    const origin = this.options.baseUrl.origin;
+    const slot = Math.max(now, nextRequestAtByOrigin.get(origin) ?? now);
+    nextRequestAtByOrigin.set(origin, slot + this.minIntervalMs);
+    const waitMs = slot - now;
     if (waitMs > 0) await new Promise((resolve) => setTimeout(resolve, waitMs));
-    this.lastRequestAt = Date.now();
   }
 }

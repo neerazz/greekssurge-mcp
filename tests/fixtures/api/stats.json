@@ -2,40 +2,55 @@
   "top_performers": [
     {
       "ticker": "AAPL",
-      "roi": 2.4
+      "displaySymbol": "AAPL",
+      "outcome": "WIN",
+      "expiry": "2026-07-18",
+      "strike": 150,
+      "alertPremium": 125.5,
+      "closePrice": 155,
+      "capital": 15000,
+      "premiumCollected": 125.5,
+      "createdAt": "2026-07-11T16:00:00.000Z",
+      "closeDate": "2026-07-18",
+      "daysHeld": 7,
+      "roi": 0.84,
+      "id": "trade_fixture_1"
     }
   ],
   "ticker_breakdown": [
     {
       "ticker": "AAPL",
       "count": 3,
-      "premium": 375.5
+      "otm": 2,
+      "premium": 375.5,
+      "winRate": 0.67
     }
   ],
   "roi_histogram": [
     {
-      "bucket": "0-1",
+      "bucket": "0-1%",
       "count": 5
     }
   ],
   "greeks_distribution": [
     {
-      "greek": "delta",
-      "bucket": "0.20-0.30",
+      "range": "0.20-0.30",
       "count": 4
     }
   ],
   "weekly_calendar": [
     {
       "week": "2026-W30",
-      "premium": 500
+      "premium": 500,
+      "count": 3
     }
   ],
   "monthly_performance": [
     {
       "month": "2026-07",
-      "premium": 1200,
-      "winRate": 0.75
+      "winRate": 0.75,
+      "trades": 12,
+      "sortKey": "2026-07"
     }
   ],
   "settled": 12,
@@ -50,9 +65,15 @@
   "assigned_signals": 1,
   "last_settled": [
     {
-      "id": "trade_fixture_1",
       "ticker": "AAPL",
-      "outcome": "WIN"
+      "strike": 150,
+      "expiry": "2026-07-18",
+      "outcome": "WIN",
+      "roi": 0.84,
+      "profit": null,
+      "premium": 125.5,
+      "daysHeld": 7,
+      "closeDate": "2026-07-18"
     }
   ]
 }

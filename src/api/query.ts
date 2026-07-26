@@ -51,19 +51,29 @@ const tradeHistoryKeys = new Set([
   "to",
 ]);
 const tickerPattern = /^[A-Z][A-Z0-9.]{0,9}$/;
+const allowedValues = {
+  mode: new Set(["ALL", "WEEKLY", "MONTHLY"]),
+  iv: new Set(["ALL", "0-75", "75-100", "100+"]),
+  roi: new Set(["ALL", "<2%", "2-4%", "4%+"]),
+  capital: new Set(["ALL", "< $2k", "$2-$5k", "$5k+"]),
+  pop: new Set(["ALL", "< 80%", "80-90%"]),
+  purpose: new Set(["CARDS"]),
+  ideaMode: new Set(["ALL", "WEEKLY", "MONTHLY"]),
+  outcome: new Set(["ALL", "OTM", "BTC", "ASSIGNED"]),
+};
 
 export function buildIdeasQuery(input: IdeasQuery = {}): URLSearchParams {
   rejectUnsupportedKeys(input as Record<string, unknown>, ideasKeys);
   const params = new URLSearchParams();
   appendPageLimit(params, input.page, input.limit);
   appendTicker(params, "ticker", input.ticker);
-  appendToken(params, "mode", input.mode, 80);
+  appendEnum(params, "mode", input.mode);
   appendDate(params, "expiry", input.expiry);
-  appendToken(params, "iv", input.iv, 80);
-  appendToken(params, "roi", input.roi, 80);
-  appendToken(params, "capital", input.capital, 80);
-  appendToken(params, "pop", input.pop, 80);
-  appendToken(params, "purpose", input.purpose, 80);
+  appendEnum(params, "iv", input.iv);
+  appendEnum(params, "roi", input.roi);
+  appendEnum(params, "capital", input.capital);
+  appendEnum(params, "pop", input.pop);
+  appendEnum(params, "purpose", input.purpose);
   appendTicker(params, "symbol", input.symbol);
   if (input.betterEntry !== undefined)
     params.set("betterEntry", String(input.betterEntry));
@@ -76,8 +86,8 @@ export function buildTradeHistoryQuery(
   rejectUnsupportedKeys(input as Record<string, unknown>, tradeHistoryKeys);
   const params = new URLSearchParams();
   appendPageLimit(params, input.page, input.limit);
-  appendToken(params, "ideaMode", input.ideaMode, 80);
-  appendToken(params, "outcome", input.outcome, 80);
+  appendEnum(params, "ideaMode", input.ideaMode);
+  appendEnum(params, "outcome", input.outcome);
   appendTicker(params, "symbol", input.symbol);
   appendDate(params, "from", input.from);
   appendDate(params, "to", input.to);
@@ -131,15 +141,14 @@ function appendTicker(
   params.set(key, normalized);
 }
 
-function appendToken(
+function appendEnum(
   params: URLSearchParams,
-  key: string,
+  key: keyof typeof allowedValues,
   value: string | undefined,
-  maxLength: number,
 ) {
   if (!value) return;
   const normalized = value.trim();
-  if (!normalized || normalized.length > maxLength || /[\r\n]/.test(normalized))
+  if (!allowedValues[key].has(normalized))
     throw new GreeksSurgeApiError("INVALID_QUERY", `Invalid ${key}.`);
   params.set(key, normalized);
 }
@@ -150,11 +159,18 @@ function appendDate(
   value: string | undefined,
 ) {
   if (!value) return;
-  if (
-    !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
-    Number.isNaN(Date.parse(`${value}T00:00:00.000Z`))
-  ) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || !isRealCalendarDate(value)) {
     throw new GreeksSurgeApiError("INVALID_QUERY", `Invalid ${key}.`);
   }
   params.set(key, value);
+}
+
+function isRealCalendarDate(value: string): boolean {
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year!, month! - 1, day!));
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month! - 1 &&
+    date.getUTCDate() === day
+  );
 }

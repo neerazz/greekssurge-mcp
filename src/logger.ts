@@ -43,6 +43,7 @@ function redactObject(value: unknown): unknown {
 }
 
 export function createLogger(context: Record<string, string> = {}): Logger {
+  const safeContext = redactObject(context) as Record<string, unknown>;
   const write = (
     level: LogLevel,
     message: string,
@@ -51,7 +52,7 @@ export function createLogger(context: Record<string, string> = {}): Logger {
     const record = {
       timestamp: new Date().toISOString(),
       level,
-      ...context,
+      ...safeContext,
       message: redactSecrets(message),
       metadata: redactObject(metadata),
     };

@@ -22,7 +22,16 @@ class MemoryTokenStore implements TokenStore {
 describe("local login service", () => {
   it("validates a captured GreeksSurge token before storing it and closes only the launched browser", async () => {
     const store = new MemoryTokenStore();
-    const close = vi.fn();
+    let closeFinished = false;
+    const close = vi.fn(async () => {
+      await new Promise((resolve) => setImmediate(resolve));
+      closeFinished = true;
+    });
+    const originalWrite = store.write.bind(store);
+    store.write = vi.fn(async (token: string) => {
+      expect(closeFinished).toBe(true);
+      await originalWrite(token);
+    });
     const validateToken = vi.fn(async () => ({ tier: "premium" }));
 
     const result = await runLocalLogin({
@@ -36,6 +45,7 @@ describe("local login service", () => {
     expect(validateToken).toHaveBeenCalledWith("site-token");
     expect(store.token).toBe("site-token");
     expect(close).toHaveBeenCalledOnce();
+    expect(closeFinished).toBe(true);
     expect(result).toEqual({ status: "authenticated", tier: "premium" });
   });
 

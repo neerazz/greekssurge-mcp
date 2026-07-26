@@ -24,7 +24,6 @@ export interface SourceMetadata {
 export interface AccountDto {
   tier: string;
   isLifetimeFree: boolean;
-  onboarding: Record<string, string | number | boolean | null>;
   features: string[];
   premiumMasked: boolean;
 }
@@ -49,6 +48,6 @@ export interface IdeaDto extends SourceMetadata {
   isFree: boolean;
   isAssigned: boolean;
   outcome: string | null;
-  orderStatus: string;
+  orderStatus: string | null;
   createdAt: string;
 }
