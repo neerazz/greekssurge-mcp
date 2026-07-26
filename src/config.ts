@@ -15,14 +15,18 @@ export interface AppConfig {
 
 type Env = Record<string, string | undefined>;
 
-const httpsUrl = (name: string) =>
+const httpsUrl = (name: string, allowLocalHttp = false) =>
   z
     .string()
     .default('https://csp.greekssurge.com')
     .transform((value, ctx) => {
       try {
         const url = new URL(value);
-        if (url.protocol !== 'https:') {
+        const localHttp =
+          allowLocalHttp &&
+          url.protocol === 'http:' &&
+          ['127.0.0.1', 'localhost', '::1'].includes(url.hostname);
+        if (url.protocol !== 'https:' && !localHttp) {
           ctx.addIssue({ code: 'custom', message: `${name} must be an HTTPS URL` });
           return z.NEVER;
         }
@@ -35,7 +39,7 @@ const httpsUrl = (name: string) =>
     });
 
 const envSchema = z.object({
-  GREEKSSURGE_API_BASE_URL: httpsUrl('GREEKSSURGE_API_BASE_URL'),
+  GREEKSSURGE_API_BASE_URL: httpsUrl('GREEKSSURGE_API_BASE_URL', true),
   GREEKSSURGE_AUTH_ISSUER: httpsUrl('GREEKSSURGE_AUTH_ISSUER'),
   MCP_TRANSPORT: z.enum(['stdio', 'http']).default('stdio'),
   HOST: z.string().min(1).default('127.0.0.1'),

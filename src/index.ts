@@ -1,3 +1,6 @@
+export { runCli } from './cli.js';
+export type { CliIO } from './cli.js';
+export { serveStdio } from './transports/stdio.js';
 export {
   discoverChromiumExecutable,
   parseDevToolsActivePort,
