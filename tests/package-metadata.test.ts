@@ -91,10 +91,11 @@ describe("package metadata", () => {
     expect(npmIgnore).toContain("*.tgz");
   });
 
-  it("defines CI, CodeQL, and Dependabot without any publish workflow", async () => {
+  it("defines CI, CodeQL, Dependabot, and secretless npm trusted publishing", async () => {
     const ci = await readFile(".github/workflows/ci.yml", "utf8");
     const codeql = await readFile(".github/workflows/codeql.yml", "utf8");
     const dependabot = await readFile(".github/dependabot.yml", "utf8");
+    const publish = await readFile(".github/workflows/publish.yml", "utf8");
 
     expect(ci).toContain("os: [ubuntu-latest, macos-latest, windows-latest]");
     expect(ci).toContain("node-version: [20.x, 22.x]");
@@ -118,6 +119,14 @@ describe("package metadata", () => {
     expect(codeql).toContain("language: [javascript-typescript]");
     expect(dependabot).toContain("package-ecosystem: npm");
     expect(dependabot).toContain("package-ecosystem: github-actions");
+    expect(publish).toContain("types: [published]");
+    expect(publish).toContain("id-token: write");
+    expect(publish).toContain("contents: read");
+    expect(publish).toContain("node-version: 24.x");
+    expect(publish).toContain("registry-url: https://registry.npmjs.org");
+    expect(publish).toContain("package-manager-cache: false");
+    expect(publish).toContain("npm publish --access public");
+    expect(publish).not.toMatch(/NODE_AUTH_TOKEN|NPM_TOKEN|secrets\./i);
   });
 
   it("pins LF line endings so Windows CI evaluates the committed bytes", async () => {

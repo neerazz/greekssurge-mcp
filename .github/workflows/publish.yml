@@ -1,0 +1,44 @@
+name: Publish Package
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: npm-publish-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout release
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Verify release tag matches package version
+        shell: bash
+        run: |
+          package_tag="v$(node --print "require('./package.json').version")"
+          if [[ "$package_tag" != "${{ github.event.release.tag_name }}" ]]; then
+            echo "Release tag ${{ github.event.release.tag_name }} does not match package version $package_tag." >&2
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Publish with npm trusted publishing
+        run: npm publish --access public
