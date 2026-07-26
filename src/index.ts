@@ -1,3 +1,5 @@
+export { FileTokenStore } from './auth/token-store.js';
+export type { FileTokenStoreOptions, TokenStore } from './auth/token-store.js';
 export { GreeksSurgeClient } from './api/client.js';
 export type { GreeksSurgeClientOptions } from './api/client.js';
 export { GreeksSurgeApiError, mapHttpStatus } from './api/errors.js';
