@@ -11,6 +11,14 @@ import {
 import { createGreeksSurgeMcpServer } from "./mcp/create-server.js";
 import { loadConfig } from "./config.js";
 import { createLogger } from "./logger.js";
+import {
+  DEFAULT_SETUP_CLIENT,
+  DEFAULT_SETUP_PACKAGE,
+  isSetupClient,
+  normalizePackageSpec,
+  renderSetupGuide,
+  type SetupClientSelection,
+} from "./setup/configs.js";
 import { serveStdio } from "./transports/stdio.js";
 
 export interface CliIO {
@@ -79,13 +87,12 @@ export async function runCli(
     if (command === "auth")
       return authCommand(subcommand, rest, env, stdout, stderr);
     if (command === "setup") {
-      if (commandArgs.length > 0) {
-        stderr("Unknown setup flag. Run `greekssurge-mcp --help`.\n");
+      const setupArgs = parseSetupArgs(commandArgs);
+      if (!setupArgs.ok) {
+        stderr(`${setupArgs.message} Run \`greekssurge-mcp --help\`.\n`);
         return 2;
       }
-      stdout(
-        `Add this MCP server to local clients with command: npx -y greekssurge-mcp\nNo GreeksSurge token is written to client configuration; auth stays in the user token store.\n`,
-      );
+      stdout(renderSetupGuide(setupArgs.options));
       return 0;
     }
   } catch (error) {
@@ -180,6 +187,62 @@ async function authCommand(
 function rejectAuthFlags(stderr: (text: string) => void): number {
   stderr("Unknown auth flag. Run `greekssurge-mcp --help`.\n");
   return 2;
+}
+
+type ParsedSetupArgs =
+  | {
+      ok: true;
+      options: {
+        client: SetupClientSelection;
+        packageSpec: string;
+      };
+    }
+  | { ok: false; message: string };
+
+function parseSetupArgs(args: string[]): ParsedSetupArgs {
+  let client: SetupClientSelection = DEFAULT_SETUP_CLIENT;
+  let packageSpec = DEFAULT_SETUP_PACKAGE;
+  const seen = new Set<string>();
+
+  for (let index = 0; index < args.length; index += 2) {
+    const flag = args[index];
+    if (flag !== "--client" && flag !== "--package") {
+      return {
+        ok: false,
+        message: flag.startsWith("--")
+          ? `Unknown setup flag: ${flag}.`
+          : `Unknown setup argument: ${flag}.`,
+      };
+    }
+    if (seen.has(flag)) {
+      return { ok: false, message: `Duplicate setup flag: ${flag}.` };
+    }
+    seen.add(flag);
+
+    const value = args[index + 1];
+    if (!value || value.startsWith("--")) {
+      return { ok: false, message: `Missing value for setup flag: ${flag}.` };
+    }
+
+    if (flag === "--client") {
+      if (!isSetupClient(value)) {
+        return { ok: false, message: `Unsupported setup client: ${value}.` };
+      }
+      client = value;
+      continue;
+    }
+
+    try {
+      packageSpec = normalizePackageSpec(value);
+    } catch (error) {
+      return {
+        ok: false,
+        message: `Invalid setup package: ${error instanceof Error ? error.message : "Package spec is invalid."}`,
+      };
+    }
+  }
+
+  return { ok: true, options: { client, packageSpec } };
 }
 
 function valueAfter(args: string[], flag: string): string | undefined {

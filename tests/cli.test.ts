@@ -1,4 +1,4 @@
-import { mkdtemp } from "node:fs/promises";
+import { mkdtemp, readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -10,10 +10,11 @@ async function capture(
 ) {
   let stdout = "";
   let stderr = "";
+  const home = await mkdtemp(join(tmpdir(), "greekssurge-cli-home-"));
   const code = await runCli(args, {
     env: {
       ...env,
-      HOME: await mkdtemp(join(tmpdir(), "greekssurge-cli-home-")),
+      HOME: home,
     },
     stdout: (line) => {
       stdout += line;
@@ -22,7 +23,7 @@ async function capture(
       stderr += line;
     },
   });
-  return { code, stdout, stderr };
+  return { code, stdout, stderr, home };
 }
 
 describe("CLI lifecycle", () => {
@@ -76,10 +77,48 @@ describe("CLI lifecycle", () => {
       code: 0,
       stdout: expect.stringContaining("/api/auth/google"),
     });
-    expect(await capture(["setup"])).toMatchObject({
+    const setup = await capture(["setup"]);
+    expect(setup).toMatchObject({
       code: 0,
-      stdout: expect.stringContaining("npx -y greekssurge-mcp"),
+      stdout: expect.stringContaining("npx -y greekssurge-mcp auth login"),
     });
+    expect(setup.stdout.indexOf("auth login")).toBeLessThan(
+      setup.stdout.indexOf("claude mcp add"),
+    );
+    expect(await readdir(setup.home)).toEqual([]);
+  });
+
+  it("supports strict setup client/package flags", async () => {
+    const scoped = await capture([
+      "setup",
+      "--client",
+      "gemini",
+      "--package",
+      "github:neerazz/greekssurge-mcp#ba5907a",
+    ]);
+    expect(scoped).toMatchObject({
+      code: 0,
+      stdout: expect.stringContaining(
+        "gemini mcp add --scope user --transport stdio greekssurge npx -y github:neerazz/greekssurge-mcp#ba5907a",
+      ),
+      stderr: "",
+    });
+    expect(scoped.stdout).not.toContain("codex mcp add");
+
+    for (const args of [
+      ["setup", "--client"],
+      ["setup", "--client", "bogus"],
+      ["setup", "--client", "codex", "--client", "gemini"],
+      ["setup", "--package"],
+      ["setup", "--package", "pkg-a", "--package", "pkg-b"],
+      ["setup", "--bogus", "value"],
+      ["setup", "codex"],
+    ]) {
+      const result = await capture(args);
+      expect(result.code).toBe(2);
+      expect(result.stdout).toBe("");
+      expect(result.stderr).toContain("setup");
+    }
   });
 
   it("requires stdio for serve in Phase A and keeps diagnostics off stdout", async () => {
