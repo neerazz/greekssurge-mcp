@@ -6,8 +6,12 @@ export interface ToolEnvelope<TData> {
   retrievedAt: string;
   disclaimer: string;
   data: TData;
-  meta?: Record<string, unknown>;
+  meta?: ToolMeta;
 }
+
+export type ToolMetaValue =
+  string | number | boolean | null | string[] | number[] | boolean[];
+export type ToolMeta = Record<string, ToolMetaValue>;
 
 export function capArray<T>(items: T[], limit = 100): T[] {
   return items.slice(0, Math.max(0, Math.min(limit, 100)));
@@ -15,7 +19,7 @@ export function capArray<T>(items: T[], limit = 100): T[] {
 
 export function envelope<TData>(
   data: TData,
-  meta?: Record<string, unknown>,
+  meta?: ToolMeta,
 ): ToolEnvelope<TData> {
   return {
     source: "https://csp.greekssurge.com",

@@ -2,7 +2,6 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { GreeksSurgeApiError } from "../api/errors.js";
 import type { IdeasQuery, TradeHistoryQuery } from "../api/query.js";
-import { toAccountDto, toIdeaDtos, toStatusDto } from "../api/schemas.js";
 import type {
   Account,
   EducationArticle,
@@ -15,7 +14,21 @@ import type {
   TradeHistoryResponse,
   WatchlistResponse,
 } from "../api/types.js";
-import { capArray, envelope, textSummary, toolError } from "./result.js";
+import {
+  mcpDataSchemas,
+  outputEnvelopeSchema,
+  toAccountData,
+  toEducationArticleData,
+  toEducationListData,
+  toFiltersData,
+  toMarketStatusData,
+  toPerformanceStatsData,
+  toPreferencesData,
+  toTradeHistoryData,
+  toTradeIdeasData,
+  toWatchlistData,
+} from "./dtos.js";
+import { envelope, textSummary, toolError } from "./result.js";
 
 export interface ToolClient {
   getAccount(): Promise<Account>;
@@ -92,29 +105,30 @@ const tradeHistoryInput = z
   })
   .strict();
 const articleInput = z.object({ slug: z.string().min(1).max(160) }).strict();
-const outputSchema = z.object({
-  source: z.string(),
-  retrievedAt: z.string(),
-  disclaimer: z.string(),
-  data: z.unknown(),
-  meta: z.record(z.string(), z.unknown()).optional(),
-});
 
 export function registerGreeksSurgeTools(options: ToolRegistryOptions): void {
-  const add = (
+  const add = <TData>(
     name: string,
     description: string,
     inputSchema: z.ZodType,
+    dataSchema: z.ZodType<TData>,
     authenticated: boolean,
     handler: (
       client: ToolClient,
       args: Record<string, unknown>,
-    ) => Promise<unknown>,
+    ) => Promise<TData>,
   ) => {
     options.register(
       name,
-      { title: name, description, inputSchema, outputSchema, annotations },
-      async (args) => runTool(name, authenticated, options, args, handler),
+      {
+        title: name,
+        description,
+        inputSchema,
+        outputSchema: outputEnvelopeSchema(dataSchema),
+        annotations,
+      },
+      async (args) =>
+        runTool(name, authenticated, options, args, dataSchema, handler),
     );
   };
 
@@ -122,100 +136,104 @@ export function registerGreeksSurgeTools(options: ToolRegistryOptions): void {
     "get_account",
     "Read the connected GreeksSurge account tier and feature flags.",
     emptyInput,
+    mcpDataSchemas.get_account,
     true,
-    async (client) => toAccountDto(await client.getAccount()),
+    async (client) => toAccountData(await client.getAccount()),
   );
   add(
     "get_market_status",
     "Read the current GreeksSurge market status.",
     emptyInput,
+    mcpDataSchemas.get_market_status,
     false,
-    async (client) => toStatusDto(await client.getMarketStatus()),
+    async (client) => toMarketStatusData(await client.getMarketStatus()),
   );
   add(
     "list_trade_ideas",
     "List tier-scoped GreeksSurge trade ideas.",
     ideasInput,
+    mcpDataSchemas.list_trade_ideas,
     true,
     async (client, args) => {
       const response = await client.listTradeIdeas(args as IdeasQuery);
-      return {
-        items: capArray(toIdeaDtos(response), Number(args.limit ?? 100)),
-        summary: response.summary,
-        lastSettled: response.lastSettled,
-        pagination: response.pagination,
-        isMarketOpen: response.isMarketOpen,
-        source: response.source,
-        cached: response.cached,
-      };
+      return toTradeIdeasData(response, Number(args.limit ?? 100));
     },
   );
   add(
     "get_available_filters",
     "Read available GreeksSurge filter values.",
     emptyInput,
+    mcpDataSchemas.get_available_filters,
     false,
-    async (client) => client.getAvailableFilters(),
+    async (client) => toFiltersData(await client.getAvailableFilters()),
   );
   add(
     "get_performance_stats",
     "Read tier-scoped GreeksSurge performance statistics.",
     emptyInput,
+    mcpDataSchemas.get_performance_stats,
     true,
-    async (client) => client.getPerformanceStats(),
+    async (client) =>
+      toPerformanceStatsData(await client.getPerformanceStats()),
   );
   add(
     "list_trade_history",
     "List settled tier-scoped GreeksSurge trade history.",
     tradeHistoryInput,
+    mcpDataSchemas.list_trade_history,
     true,
     async (client, args) => {
       const response = await client.listTradeHistory(args as TradeHistoryQuery);
-      return {
-        ...response,
-        ideas: capArray(response.ideas, Number(args.limit ?? 100)),
-      };
+      return toTradeHistoryData(response, Number(args.limit ?? 100));
     },
   );
   add(
     "list_education",
     "List GreeksSurge education articles.",
     emptyInput,
+    mcpDataSchemas.list_education,
     false,
-    async (client) => client.listEducation(),
+    async (client) => toEducationListData(await client.listEducation()),
   );
   add(
     "get_education_article",
     "Read one GreeksSurge education article.",
     articleInput,
+    mcpDataSchemas.get_education_article,
     false,
-    async (client, args) => client.getEducationArticle(String(args.slug)),
+    async (client, args) =>
+      toEducationArticleData(
+        await client.getEducationArticle(String(args.slug)),
+      ),
   );
   add(
     "get_watchlist",
     "Read the connected account watchlist.",
     emptyInput,
+    mcpDataSchemas.get_watchlist,
     true,
-    async (client) => client.getWatchlist(),
+    async (client) => toWatchlistData(await client.getWatchlist()),
   );
   add(
     "get_preferences",
     "Read the connected account preferences.",
     emptyInput,
+    mcpDataSchemas.get_preferences,
     true,
-    async (client) => client.getPreferences(),
+    async (client) => toPreferencesData(await client.getPreferences()),
   );
 }
 
-async function runTool(
+async function runTool<TData>(
   name: string,
   authenticated: boolean,
   options: ToolRegistryOptions,
   args: Record<string, unknown>,
+  dataSchema: z.ZodType<TData>,
   handler: (
     client: ToolClient,
     args: Record<string, unknown>,
-  ) => Promise<unknown>,
+  ) => Promise<TData>,
 ): Promise<ToolResult> {
   try {
     if (authenticated && !(await options.tokenProvider())) {
@@ -224,7 +242,7 @@ async function runTool(
         "Run `npx greekssurge-mcp auth login` to connect your GreeksSurge account.",
       );
     }
-    const data = await handler(options.clientFactory(), args);
+    const data = dataSchema.parse(await handler(options.clientFactory(), args));
     const structuredContent = envelope(data);
     return {
       content: [
