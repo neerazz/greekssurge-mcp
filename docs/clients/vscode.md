@@ -1,6 +1,6 @@
 # VS Code local stdio setup
 
-Grounded official protocol docs: https://modelcontextprotocol.io/specification/2025-11-25/basic/transports and https://modelcontextprotocol.io/docs/develop/build-server
+Grounded official docs: https://code.visualstudio.com/docs/agents/reference/mcp-configuration and https://modelcontextprotocol.io/specification/2025-11-25/basic/transports
 
 1. Authenticate first:
 

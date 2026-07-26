@@ -111,6 +111,27 @@ describe("local stdio setup config generator", () => {
     expect(() =>
       generateSetupGuide({ packageSpec: "pkg with spaces" }),
     ).toThrow(/Package spec must not contain whitespace/i);
+    for (const packageSpec of ["pkg;touch-x", "pkg$(id)", "pkg`id`", "pkg|id"])
+      expect(() => generateSetupGuide({ packageSpec })).toThrow(
+        /Package spec contains unsupported characters/i,
+      );
+  });
+
+  it("links each client to its current official MCP setup documentation", () => {
+    const guide = generateSetupGuide({ client: "all" });
+    const expected = {
+      "claude-code": "https://code.claude.com/docs/en/mcp",
+      codex: "https://developers.openai.com/codex/mcp/",
+      gemini: "https://geminicli.com/docs/tools/mcp-server/",
+      "claude-desktop":
+        "https://modelcontextprotocol.io/docs/develop/connect-local-servers",
+      cursor: "https://cursor.com/docs/mcp",
+      vscode:
+        "https://code.visualstudio.com/docs/agents/reference/mcp-configuration",
+    } as const;
+
+    for (const client of SUPPORTED_SETUP_CLIENTS)
+      expect(entryFor(guide, client).officialDocs).toContain(expected[client]);
   });
 });
 

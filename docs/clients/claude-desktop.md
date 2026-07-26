@@ -1,6 +1,6 @@
 # Claude Desktop local stdio setup
 
-Grounded official docs: https://code.claude.com/docs/en/mcp and https://modelcontextprotocol.io/specification/2025-11-25/basic/transports
+Grounded official docs: https://modelcontextprotocol.io/docs/develop/connect-local-servers and https://modelcontextprotocol.io/specification/2025-11-25/basic/transports
 
 1. Authenticate first:
 

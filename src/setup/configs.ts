@@ -35,6 +35,12 @@ export interface SetupGuide {
 
 const CLAUDE_DOCS = "https://code.claude.com/docs/en/mcp";
 const CODEX_DOCS = "https://developers.openai.com/codex/mcp/";
+const GEMINI_DOCS = "https://geminicli.com/docs/tools/mcp-server/";
+const CLAUDE_DESKTOP_DOCS =
+  "https://modelcontextprotocol.io/docs/develop/connect-local-servers";
+const CURSOR_DOCS = "https://cursor.com/docs/mcp";
+const VSCODE_DOCS =
+  "https://code.visualstudio.com/docs/agents/reference/mcp-configuration";
 const MCP_TRANSPORTS_DOCS =
   "https://modelcontextprotocol.io/specification/2025-11-25/basic/transports";
 const MCP_SERVER_DOCS =
@@ -56,6 +62,8 @@ export function normalizePackageSpec(
     throw new Error("Package spec must not start with a dash.");
   if (/\s/.test(spec))
     throw new Error("Package spec must not contain whitespace.");
+  if (!/^[A-Za-z0-9@._~+:/#-]+$/.test(spec))
+    throw new Error("Package spec contains unsupported characters.");
   if (/\b(?:gs_token|authorization|bearer|api[_-]?key)\b/i.test(spec)) {
     throw new Error("Package spec must not contain token-like values.");
   }
@@ -145,14 +153,14 @@ function setupEntryForClient(
       return {
         client,
         title: "Gemini CLI",
-        officialDocs: [MCP_TRANSPORTS_DOCS, MCP_SERVER_DOCS],
+        officialDocs: [GEMINI_DOCS, MCP_TRANSPORTS_DOCS],
         command: `gemini mcp add --scope user --transport stdio ${SETUP_SERVER_NAME} npx -y ${packageSpec}`,
       };
     case "claude-desktop":
       return {
         client,
         title: "Claude Desktop",
-        officialDocs: [CLAUDE_DOCS, MCP_TRANSPORTS_DOCS],
+        officialDocs: [CLAUDE_DESKTOP_DOCS, MCP_TRANSPORTS_DOCS],
         json: stringifyJsonConfig({
           mcpServers: {
             [SETUP_SERVER_NAME]: stdioJsonServer(packageSpec),
@@ -163,7 +171,7 @@ function setupEntryForClient(
       return {
         client,
         title: "Cursor",
-        officialDocs: [MCP_TRANSPORTS_DOCS, MCP_SERVER_DOCS],
+        officialDocs: [CURSOR_DOCS, MCP_SERVER_DOCS],
         json: stringifyJsonConfig({
           mcpServers: {
             [SETUP_SERVER_NAME]: stdioJsonServer(packageSpec),
@@ -174,7 +182,7 @@ function setupEntryForClient(
       return {
         client,
         title: "VS Code",
-        officialDocs: [MCP_TRANSPORTS_DOCS, MCP_SERVER_DOCS],
+        officialDocs: [VSCODE_DOCS, MCP_TRANSPORTS_DOCS],
         json: stringifyJsonConfig({
           servers: {
             [SETUP_SERVER_NAME]: {
