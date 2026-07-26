@@ -60,7 +60,7 @@ describe("loadConfig", () => {
         },
         "win32",
       ),
-    ).toBe("C:\\Users\\person\\AppData\\Roaming/greekssurge-mcp/token.json");
+    ).toBe("C:\\Users\\person\\AppData\\Roaming\\greekssurge-mcp\\token.json");
     expect(
       defaultTokenPath(
         { HOME: "/home/person", XDG_CONFIG_HOME: "/custom/config" },

@@ -1,5 +1,5 @@
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { posix, win32 } from "node:path";
 import { z } from "zod";
 
 export interface AppConfig {
@@ -73,13 +73,16 @@ export function defaultTokenPath(
   platform: NodeJS.Platform = process.platform,
 ): string {
   const home = env.HOME ?? homedir();
+  const path = platform === "win32" ? win32 : posix;
   const configRoot =
     platform === "darwin"
-      ? join(home, "Library", "Application Support")
+      ? path.join(home, "Library", "Application Support")
       : platform === "win32"
-        ? (env.APPDATA ?? env.LOCALAPPDATA ?? join(home, "AppData", "Roaming"))
-        : (env.XDG_CONFIG_HOME ?? join(home, ".config"));
-  return join(configRoot, "greekssurge-mcp", "token.json");
+        ? (env.APPDATA ??
+          env.LOCALAPPDATA ??
+          path.join(home, "AppData", "Roaming"))
+        : (env.XDG_CONFIG_HOME ?? path.join(home, ".config"));
+  return path.join(configRoot, "greekssurge-mcp", "token.json");
 }
 
 export function loadConfig(env: Env = process.env): AppConfig {
