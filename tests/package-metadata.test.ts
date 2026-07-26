@@ -9,16 +9,37 @@ describe("package metadata", () => {
     const pkg = await readJson("package.json");
 
     expect(pkg.name).toBe("greekssurge-mcp");
+    expect(pkg.description).toMatch(/read-only Model Context Protocol server/i);
     expect(pkg.type).toBe("module");
     expect(pkg.engines?.node).toBe(">=20");
     expect(pkg.bin?.["greekssurge-mcp"]).toBe("dist/cli.js");
     expect(pkg.exports?.["."]).toBe("./dist/index.js");
+    expect(pkg.repository).toEqual({
+      type: "git",
+      url: "git+https://github.com/neerazz/greekssurge-mcp.git",
+    });
+    expect(pkg.homepage).toBe(
+      "https://github.com/neerazz/greekssurge-mcp#readme",
+    );
+    expect(pkg.bugs).toEqual({
+      url: "https://github.com/neerazz/greekssurge-mcp/issues",
+    });
+    expect(pkg.keywords).toEqual(
+      expect.arrayContaining([
+        "mcp",
+        "model-context-protocol",
+        "greekssurge",
+        "options",
+        "stdio",
+        "read-only",
+      ]),
+    );
     expect(pkg.files).toEqual([
       "dist",
       "README.md",
       "LICENSE",
-      "docs/superpowers/specs/2026-07-26-greekssurge-mcp-design.md",
-      "docs/superpowers/plans/2026-07-26-greekssurge-mcp-v1.md",
+      "SECURITY.md",
+      "docs/clients/*.md",
     ]);
   });
 
@@ -32,13 +53,26 @@ describe("package metadata", () => {
         "test",
         "test:coverage",
         "lint",
+        "format",
         "format:check",
         "pack:check",
+        "scan:secrets",
+        "prepare",
+        "prepublishOnly",
         "start",
       ]),
     );
+    expect(pkg.scripts.prepare).toBe("npm run build");
+    expect(pkg.scripts.prepublishOnly).toBe(
+      "npm run format:check && npm run lint && npm run check && npm run test && npm run build && npm run scan:secrets && npm run pack:check",
+    );
+    expect(pkg.scripts["scan:secrets"]).toBe("node scripts/scan-secrets.mjs");
+    expect(pkg.scripts["pack:check"]).toBe("node scripts/verify-package.mjs");
     expect(pkg.dependencies?.["@modelcontextprotocol/sdk"]).toBe("1.29.0");
     expect(pkg.dependencies?.zod).toMatch(/^\^4\./);
+    expect(pkg.dependencies?.ws).toMatch(/^\^8\./);
+    expect(pkg.dependencies).not.toHaveProperty("express");
+    expect(pkg.dependencies).not.toHaveProperty("express-rate-limit");
   });
 
   it("keeps source and tests out of the npm tarball", async () => {
@@ -47,5 +81,34 @@ describe("package metadata", () => {
     expect(npmIgnore).toContain("src");
     expect(npmIgnore).toContain("tests");
     expect(npmIgnore).toContain("coverage");
+    expect(npmIgnore).toContain("docs/superpowers");
+    expect(npmIgnore).toContain(".github");
+    expect(npmIgnore).toContain("scripts");
+    expect(npmIgnore).toContain("*.tgz");
+  });
+
+  it("defines CI, CodeQL, and Dependabot without any publish workflow", async () => {
+    const ci = await readFile(".github/workflows/ci.yml", "utf8");
+    const codeql = await readFile(".github/workflows/codeql.yml", "utf8");
+    const dependabot = await readFile(".github/dependabot.yml", "utf8");
+
+    expect(ci).toContain("os: [ubuntu-latest, macos-latest, windows-latest]");
+    expect(ci).toContain("node-version: [20.x, 22.x]");
+    for (const command of [
+      "npm ci",
+      "npm run format:check",
+      "npm run lint",
+      "npm run check",
+      "npm run test",
+      "npm run build",
+      "npm run scan:secrets",
+      "npm run pack:check",
+    ])
+      expect(ci).toContain(command);
+    expect(ci).not.toMatch(/npm publish|NODE_AUTH_TOKEN|id-token: write/i);
+    expect(codeql).toContain("github/codeql-action/init@v3");
+    expect(codeql).toContain("language: [javascript-typescript]");
+    expect(dependabot).toContain("package-ecosystem: npm");
+    expect(dependabot).toContain("package-ecosystem: github-actions");
   });
 });

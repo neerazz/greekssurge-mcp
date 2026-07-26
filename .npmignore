@@ -4,9 +4,14 @@ coverage
 node_modules
 .git
 .github
+scripts
+docs/superpowers
 *.log
+*.tgz
 .env
 .env.*
+*.pem
+*.key
 vitest.config.ts
 tsconfig.json
 eslint.config.js
