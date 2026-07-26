@@ -1,0 +1,12 @@
+src
+tests
+coverage
+node_modules
+.git
+.github
+*.log
+.env
+.env.*
+vitest.config.ts
+tsconfig.json
+eslint.config.js

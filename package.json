@@ -1,0 +1,51 @@
+{
+  "name": "greekssurge-mcp",
+  "version": "0.1.0",
+  "description": "Read-only Model Context Protocol server for GreeksSurge account data.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "bin": {
+    "greekssurge-mcp": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "docs/superpowers/specs/2026-07-26-greekssurge-mcp-design.md",
+    "docs/superpowers/plans/2026-07-26-greekssurge-mcp-v1.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint . --max-warnings=0",
+    "format:check": "prettier --check .",
+    "pack:check": "npm pack --dry-run",
+    "start": "node dist/cli.js serve"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.2.1",
+    "ws": "^8.18.3",
+    "zod": "^4.1.13"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^22.18.10",
+    "@types/ws": "^8.18.1",
+    "@vitest/coverage-v8": "^3.2.4",
+    "eslint": "^9.39.1",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.2",
+    "vitest": "^3.2.4"
+  }
+}
