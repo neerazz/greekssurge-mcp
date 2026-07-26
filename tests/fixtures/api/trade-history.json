@@ -1,0 +1,14 @@
+{
+  "items": [
+    {
+      "id": "trade_1",
+      "ticker": "NVDA",
+      "strategy": "spread",
+      "openedAt": "2026-04-01T14:00:00.000Z",
+      "closedAt": "2026-04-15T14:00:00.000Z",
+      "status": "closed",
+      "pnlPct": 1.8
+    }
+  ],
+  "nextCursor": null
+}

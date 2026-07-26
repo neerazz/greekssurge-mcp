@@ -1,0 +1,14 @@
+{
+  "tickers": [
+    "AAPL",
+    "MSFT"
+  ],
+  "strategies": [
+    "covered_call",
+    "cash_secured_put"
+  ],
+  "expirations": [
+    "2026-08-21"
+  ],
+  "updatedAt": "2026-07-26T10:00:00.000Z"
+}

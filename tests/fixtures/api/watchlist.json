@@ -1,0 +1,10 @@
+{
+  "items": [
+    {
+      "ticker": "AAPL",
+      "addedAt": "2026-07-01T12:00:00.000Z",
+      "notes": "Sanitized note"
+    }
+  ],
+  "updatedAt": "2026-07-26T10:00:00.000Z"
+}

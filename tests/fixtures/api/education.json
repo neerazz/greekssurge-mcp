@@ -1,0 +1,12 @@
+{
+  "items": [
+    {
+      "id": "edu_1",
+      "slug": "covered-calls-basics",
+      "title": "Covered Calls Basics",
+      "summary": "Options education overview.",
+      "publishedAt": "2026-01-10T12:00:00.000Z",
+      "tier": "free"
+    }
+  ]
+}

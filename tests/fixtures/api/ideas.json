@@ -1,0 +1,16 @@
+{
+  "items": [
+    {
+      "id": "idea_1",
+      "ticker": "AAPL",
+      "strategy": "covered_call",
+      "title": "Covered call example",
+      "summary": "Sanitized educational setup.",
+      "publishedAt": "2026-07-25T12:00:00.000Z",
+      "expiresAt": "2026-08-15T20:00:00.000Z",
+      "tier": "premium",
+      "isMasked": false
+    }
+  ],
+  "nextCursor": null
+}
