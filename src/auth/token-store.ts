@@ -49,13 +49,14 @@ export class FileTokenStore implements TokenStore {
       if (error instanceof SyntaxError)
         throw new Error(
           "Token store is malformed. Run `greekssurge-mcp auth logout` and login again.",
+          { cause: error },
         );
       if (
         error instanceof Error &&
         /Token store is malformed|symlink/i.test(error.message)
       )
         throw error;
-      throw new Error("Unable to read token store.");
+      throw new Error("Unable to read token store.", { cause: error });
     }
   }
 

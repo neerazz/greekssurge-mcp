@@ -111,7 +111,10 @@ describe("package metadata", () => {
     ])
       expect(ci).toContain(command);
     expect(ci).not.toMatch(/npm publish|NODE_AUTH_TOKEN|id-token: write/i);
-    expect(codeql).toContain("github/codeql-action/init@v3");
+    expect(ci).toContain("actions/checkout@v7");
+    expect(ci).toContain("actions/setup-node@v7");
+    expect(codeql).toContain("actions/checkout@v7");
+    expect(codeql).toContain("github/codeql-action/init@v4");
     expect(codeql).toContain("language: [javascript-typescript]");
     expect(dependabot).toContain("package-ecosystem: npm");
     expect(dependabot).toContain("package-ecosystem: github-actions");

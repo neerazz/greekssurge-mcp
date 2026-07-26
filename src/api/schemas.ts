@@ -290,6 +290,7 @@ export function parseUpstream<TName extends UpstreamSchemaName>(
     if (error instanceof ZodError) {
       throw new Error(
         `Upstream contract changed for ${schemaName}: ${error.issues[0]?.message ?? "invalid payload"}`,
+        { cause: error },
       );
     }
     throw error;
