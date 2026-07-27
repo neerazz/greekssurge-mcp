@@ -135,24 +135,41 @@ describe("local stdio setup config generator", () => {
   });
 });
 
-describe("client setup documentation", () => {
-  it("documents every supported client with grounded official URLs", async () => {
-    const groundedUrls = [
-      "https://modelcontextprotocol.io/docs/develop/build-server",
-      "https://modelcontextprotocol.io/specification/2025-11-25/basic/transports",
-      "https://code.claude.com/docs/en/mcp",
-      "https://developers.openai.com/codex/mcp/",
-    ];
+// Client setup used to live in docs/clients/*.md. That tree is now local-only and
+// unpublished, so the shipped surfaces are `greekssurge-mcp setup` and README.md.
+// Asserting against files that never reach a fresh clone passed locally and broke CI.
+describe("client setup guidance ships without docs/", () => {
+  it("renders auth, install and a grounded official URL for every supported client", () => {
+    const output = renderSetupGuide({ client: "all" });
+    const guide = generateSetupGuide({ client: "all" });
+
+    expect(output).toContain("npx -y greekssurge-mcp auth login");
+    expect(output).toMatch(/never paste a GreeksSurge token/i);
 
     for (const client of SUPPORTED_SETUP_CLIENTS) {
-      const doc = await readFile(
-        join(process.cwd(), "docs", "clients", `${client}.md`),
-        "utf8",
-      );
-      expect(doc).toContain("greekssurge-mcp auth login");
-      expect(doc).toContain("npx -y greekssurge-mcp");
-      expect(doc).toContain("never paste a GreeksSurge token");
-      expect(groundedUrls.some((url) => doc.includes(url))).toBe(true);
+      const entry = entryFor(guide, client);
+      // Each client is reachable from the rendered guide by title.
+      expect(output).toContain(entry.title);
+      // …with at least one grounded https documentation URL.
+      expect(entry.officialDocs.length).toBeGreaterThan(0);
+      for (const url of entry.officialDocs) {
+        expect(url).toMatch(/^https:\/\//);
+        expect(output).toContain(url);
+      }
+      // …and a concrete way to install it.
+      const install = entry.command ?? entry.json ?? "";
+      expect(install).toContain("greekssurge-mcp");
+      expect(output).toContain("npx");
     }
+  });
+
+  it("keeps every supported client documented in the self-contained README", async () => {
+    const readme = await readFile(join(process.cwd(), "README.md"), "utf8");
+    const titles = generateSetupGuide({ client: "all" }).entries.map(
+      (entry) => entry.title,
+    );
+
+    for (const title of titles) expect(readme).toContain(title);
+    expect(readme).not.toContain("docs/clients");
   });
 });

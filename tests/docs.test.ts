@@ -63,6 +63,31 @@ describe("public release documentation", () => {
     expect(readme).toContain("https://github.com/neerazz/greekssurge-mcp");
   });
 
+  it("shows build and npm status badges that point at real workflows and the package", async () => {
+    const readme = await read(docs.readme);
+    const pkg = JSON.parse(await readFile("package.json", "utf8")) as {
+      name: string;
+    };
+
+    // Build status must reference workflows that actually exist in this repo.
+    for (const workflow of ["ci.yml", "codeql.yml"]) {
+      expect(readme).toContain(
+        `https://github.com/neerazz/greekssurge-mcp/actions/workflows/${workflow}/badge.svg`,
+      );
+      await expect(
+        readFile(`.github/workflows/${workflow}`, "utf8"),
+      ).resolves.toBeTruthy();
+    }
+
+    // npm badges must track the package this repo actually publishes.
+    expect(readme).toContain(`https://img.shields.io/npm/v/${pkg.name}`);
+    expect(readme).toContain(`https://www.npmjs.com/package/${pkg.name}`);
+    expect(readme).toMatch(/img\.shields\.io\/npm\/l\//);
+
+    // Badges must be markdown images wired to a link, not bare text.
+    expect(readme).toMatch(/\[!\[CI\]\([^)]+badge\.svg\)\]\(https:\/\/[^)]+\)/);
+  });
+
   it("carries setup for every supported client inline, with no links into gitignored docs/", async () => {
     const readme = await read(docs.readme);
 
