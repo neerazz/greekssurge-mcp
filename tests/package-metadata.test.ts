@@ -77,6 +77,28 @@ describe("package metadata", () => {
     expect(pkg.dependencies).not.toHaveProperty("express-rate-limit");
   });
 
+  it("keeps typescript inside the peer range typescript-eslint actually allows", async () => {
+    const pkg = await readJson("package.json");
+    const lock = await readJson("package-lock.json");
+
+    const resolved = (
+      lock.packages as Record<string, { version?: string } | undefined>
+    )["node_modules/typescript"]?.version;
+    expect(resolved).toBeTruthy();
+
+    const declaredMajor = Number(
+      /(\d+)/.exec(String(pkg.devDependencies.typescript))?.[1],
+    );
+    const resolvedMajor = Number(/(\d+)/.exec(String(resolved))?.[1]);
+
+    // typescript-eslint 8.x declares peer typescript ">=4.8.4 <6.1.0". Anything
+    // at or above 7 makes `npm ci` unresolvable, which is an install-time
+    // failure no later gate can catch.
+    expect(declaredMajor).toBeLessThan(7);
+    expect(resolvedMajor).toBeLessThan(7);
+    expect(declaredMajor).toBe(resolvedMajor);
+  });
+
   it("keeps source and tests out of the npm tarball", async () => {
     const npmIgnore = await readFile(".npmignore", "utf8");
 
@@ -117,6 +139,11 @@ describe("package metadata", () => {
     expect(codeql).toContain("language: [javascript-typescript]");
     expect(dependabot).toContain("package-ecosystem: npm");
     expect(dependabot).toContain("package-ecosystem: github-actions");
+    // A TypeScript major is unresolvable while typescript-eslint caps its peer
+    // range below it: npm ci dies at install and CI never reaches a test.
+    // Merging that bump is exactly how main went red.
+    expect(dependabot).toContain("dependency-name: typescript");
+    expect(dependabot).toContain("version-update:semver-major");
     expect(publish).toContain("types: [published]");
     expect(publish).toContain("id-token: write");
     expect(publish).toContain("contents: read");
