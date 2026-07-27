@@ -9,29 +9,13 @@ export {
 } from "./auth/local-login.js";
 export type { LocalLoginOptions } from "./auth/local-login.js";
 export {
-  buildAuthorizationUrl,
-  createOAuthState,
-  createPkceChallenge,
-  createPkcePair,
-  exchangeAuthorizationCode,
-  startLoopbackAuthorization,
-} from "./auth/native-oauth.js";
+  findGreeksSurgeBrowserOsPage,
+  readBrowserOsToken,
+} from "./auth/browseros-session.js";
 export type {
-  AuthorizationUrlOptions,
-  ExchangeAuthorizationCodeOptions,
-  LoopbackAuthorization,
-  PkcePair,
-  StartLoopbackAuthorizationOptions,
-} from "./auth/native-oauth.js";
-export {
-  browserOpenCommand,
-  openSystemBrowser,
-} from "./auth/system-browser.js";
-export type {
-  BrowserOpenCommand,
-  OpenSystemBrowserOptions,
-  SpawnProcess,
-} from "./auth/system-browser.js";
+  BrowserOsPage,
+  ReadBrowserOsTokenOptions,
+} from "./auth/browseros-session.js";
 export { FileTokenStore } from "./auth/token-store.js";
 export type { FileTokenStoreOptions, TokenStore } from "./auth/token-store.js";
 export { GreeksSurgeClient } from "./api/client.js";
@@ -75,4 +59,4 @@ export {
 export type { UpstreamSchemaName } from "./api/schemas.js";
 export type * from "./api/types.js";
 export const packageName = "greekssurge-mcp";
-export const packageVersion = "0.1.0";
+export const packageVersion = "0.1.1";

@@ -2,7 +2,7 @@
 
 ## Supported version
 
-Version 0.1.0 ships only a local stdio MCP server. Local stdio is the only shipped transport in v0.1.0.
+Version 0.1.1 ships only a local stdio MCP server. Local stdio is the only shipped transport in v0.1.1.
 
 Hosted Streamable HTTP/OAuth is not shipped because `csp.greekssurge.com` lacks the required OAuth discovery/backend contract for a compliant remote MCP endpoint.
 
@@ -10,11 +10,9 @@ Hosted Streamable HTTP/OAuth is not shipped because `csp.greekssurge.com` lacks 
 
 No Google password collection. The CLI never prompts for, stores, proxies, or logs a Google password.
 
-`npx -y greekssurge-mcp auth login` opens GreeksSurge in the operating system default browser. The CLI does not launch or instrument a dedicated browser and does not read browser storage, cookies, passwords, profiles, or sessions.
+`npx -y greekssurge-mcp auth login` reuses the authenticated GreeksSurge session in BrowserOS. It does not launch a disposable browser or collect credentials. It reads only `localStorage.gs_token` from a tab whose origin is exactly `https://csp.greekssurge.com`, through BrowserOS's loopback-only DevTools endpoint.
 
-Before opening the browser, the CLI binds a random-port `127.0.0.1 loopback` callback. The authorization request carries an unpredictable state value and `S256 PKCE` challenge. GreeksSurge must return only a short-lived, single-use authorization code to that callback; bearer tokens must never appear in a browser or loopback URL. The CLI exchanges the code directly with `/api/auth/mcp/token` using the PKCE verifier.
-
-The exchanged token is validated through the GreeksSurge `/api/auth/me` endpoint before it is written. If exchange or validation fails, nothing is stored. Production authentication remains unavailable until GreeksSurge deploys the matching authorize/token backend contract.
+The imported token is validated through the GreeksSurge `/api/auth/me` endpoint before it is written. If BrowserOS discovery, session import, or validation fails, nothing new is stored and an existing valid local credential is preserved. No token is accepted through CLI arguments, stdout, logs, clipboard, or manual paste.
 
 ## Local token storage
 

@@ -8,7 +8,7 @@ Grounded official docs: https://geminicli.com/docs/tools/mcp-server/ and https:/
 npx -y greekssurge-mcp auth login
 ```
 
-Until npm publication, use `npx -y github:neerazz/greekssurge-mcp#v0.1.0 auth login`.
+Until npm publication, use `npx -y github:neerazz/greekssurge-mcp#v0.1.1 auth login`.
 
 2. Add the read-only local stdio server:
 
@@ -16,7 +16,7 @@ Until npm publication, use `npx -y github:neerazz/greekssurge-mcp#v0.1.0 auth lo
 gemini mcp add --scope user --transport stdio greekssurge npx -y greekssurge-mcp
 ```
 
-Until npm publication, replace the package spec with `github:neerazz/greekssurge-mcp#v0.1.0`.
+Until npm publication, replace the package spec with `github:neerazz/greekssurge-mcp#v0.1.1`.
 
 3. Verify by calling `get_account` from Gemini.
 

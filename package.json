@@ -1,6 +1,6 @@
 {
   "name": "greekssurge-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Read-only Model Context Protocol server for GreeksSurge account data.",
   "type": "module",
   "license": "MIT",
@@ -53,11 +53,13 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.29.0",
+    "ws": "^8.18.3",
     "zod": "^4.1.13"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.1.1",
+    "@types/ws": "^8.18.1",
     "@vitest/coverage-v8": "^4.1.10",
     "eslint": "^10.8.0",
     "prettier": "^3.6.2",

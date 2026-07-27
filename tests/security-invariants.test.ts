@@ -36,22 +36,19 @@ const syntheticMarkers = [
 ];
 
 describe("security invariants", () => {
-  it("removes browser instrumentation and CDP from the shipping authentication path", async () => {
-    const shippingFiles = [
-      ...(await walk("src")).filter((path) => path.endsWith(".ts")),
-      ...releaseTrackedFiles,
-      ...(await walk("docs/clients")).filter((path) => path.endsWith(".md")),
-    ];
-    const corpus = (
-      await Promise.all(shippingFiles.map((path) => readFile(path, "utf8")))
-    ).join("\n");
+  it("confines BrowserOS session import to the exact GreeksSurge origin and loopback debugger", async () => {
+    const corpus = await readFile("src/auth/browseros-session.ts", "utf8");
     const pkg = JSON.parse(await readFile("package.json", "utf8"));
 
+    expect(corpus).toContain('"https://csp.greekssurge.com"');
+    expect(corpus).toContain("localStorage.getItem('gs_token')");
+    expect(corpus).toMatch(/127\.0\.0\.1.*localhost.*::1/s);
+    expect(corpus).toMatch(/\/devtools\\\/page/);
     expect(corpus).not.toMatch(
-      /Chromium|DevToolsActivePort|\bCDP\b|localStorage|BROWSER_EXECUTABLE|auth\/cdp|browser-paths/i,
+      /spawn\(|--user-data-dir|--remote-debugging-port/,
     );
-    expect(pkg.dependencies).not.toHaveProperty("ws");
-    expect(pkg.devDependencies).not.toHaveProperty("@types/ws");
+    expect(pkg.dependencies).toHaveProperty("ws");
+    expect(pkg.devDependencies).toHaveProperty("@types/ws");
   });
 
   it("does not contain forbidden mutation, admin, billing, or payment endpoint literals", async () => {

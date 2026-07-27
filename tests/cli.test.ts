@@ -34,7 +34,7 @@ describe("CLI lifecycle", () => {
     });
     expect(await capture(["--version"])).toMatchObject({
       code: 0,
-      stdout: expect.stringContaining("0.1.0"),
+      stdout: expect.stringContaining("0.1.1"),
     });
   });
 
@@ -75,11 +75,11 @@ describe("CLI lifecycle", () => {
     });
     expect(await capture(["auth", "login", "--dry-run"])).toMatchObject({
       code: 0,
-      stdout: expect.stringContaining("/api/auth/mcp/authorize"),
+      stdout: expect.stringContaining("/api/auth/me"),
     });
     const loginDryRun = await capture(["auth", "login", "--dry-run"]);
-    expect(loginDryRun.stdout).toMatch(/operating system default browser/i);
-    expect(loginDryRun.stdout).not.toMatch(/Chromium|Chrome|CDP/i);
+    expect(loginDryRun.stdout).toMatch(/BrowserOS/i);
+    expect(loginDryRun.stdout).toMatch(/\/api\/auth\/me/i);
     const setup = await capture(["setup"]);
     expect(setup).toMatchObject({
       code: 0,
@@ -89,16 +89,6 @@ describe("CLI lifecycle", () => {
       setup.stdout.indexOf("claude mcp add"),
     );
     expect(await readdir(setup.home)).toEqual([]);
-  });
-
-  it("rejects credential-bearing auth issuers without printing credentials", async () => {
-    const result = await capture(["auth", "login", "--dry-run"], {
-      GREEKSSURGE_AUTH_ISSUER: "https://user:private-password@example.com/",
-    });
-
-    expect(result.code).not.toBe(0);
-    expect(result.stdout).not.toContain("private-password");
-    expect(result.stderr).not.toContain("private-password");
   });
 
   it("supports strict setup client/package flags", async () => {

@@ -170,7 +170,7 @@ async function installAndSmokeTest(tarball) {
     cwd: temp,
     env,
   }).stdout.trim();
-  if (version !== "0.1.0")
+  if (version !== "0.1.1")
     throw new Error(`Unexpected CLI version: ${version}`);
 
   const api = await fixtureApi();
@@ -211,7 +211,6 @@ async function sdkSmokeTest(bin, apiUrl, baseEnv) {
     env: {
       ...baseEnv,
       GREEKSSURGE_API_BASE_URL: apiUrl,
-      GREEKSSURGE_AUTH_ISSUER: "https://csp.greekssurge.com",
     },
   });
   const client = new Client({ name: "package-verifier", version: "1.0.0" });

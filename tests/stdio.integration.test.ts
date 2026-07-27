@@ -81,7 +81,6 @@ describe("stdio CLI integration", () => {
       env: {
         ...process.env,
         GREEKSSURGE_API_BASE_URL: api.url,
-        GREEKSSURGE_AUTH_ISSUER: "https://csp.greekssurge.com",
       },
       stdio: ["pipe", "pipe", "pipe"],
     });

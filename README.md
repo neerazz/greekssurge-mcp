@@ -2,13 +2,13 @@
 
 Read-only Model Context Protocol (MCP) server for GreeksSurge account and educational data.
 
-This package ships a local stdio MCP server for v0.1.0. It lets an MCP client read GreeksSurge data through your own local authenticated session. It cannot place trades, change account settings, manage billing, or provide financial advice; returned content is not financial advice.
+This package ships a local stdio MCP server for v0.1.1. It lets an MCP client read GreeksSurge data through your own local authenticated session. It cannot place trades, change account settings, manage billing, or provide financial advice; returned content is not financial advice.
 
 Repository: https://github.com/neerazz/greekssurge-mcp
 
 ## Shortest path
 
-Prerequisite: Node.js 20+.
+Prerequisites: Node.js 20+ and BrowserOS running with an authenticated `https://csp.greekssurge.com` tab.
 
 1. Authenticate locally:
 
@@ -16,11 +16,7 @@ Prerequisite: Node.js 20+.
 npx -y greekssurge-mcp auth login
 ```
 
-The login command opens GreeksSurge in your operating system default browser. It returns through a random-port `127.0.0.1` loopback callback protected by state and S256 PKCE. The CLI never asks for your Google password, reads browser storage, or asks you to copy a token.
-
-This login path requires the GreeksSurge backend to expose `/api/auth/mcp/authorize` and `/api/auth/mcp/token`. Do not treat authentication as available until those endpoints are deployed and the production smoke test passes.
-
-Backend implementation and abuse-test contract: [docs/upstream-oauth-contract.md](https://github.com/neerazz/greekssurge-mcp/blob/main/docs/upstream-oauth-contract.md).
+The login command reuses the current GreeksSurge authentication already stored in BrowserOS. It reads only `gs_token` from a tab whose origin is exactly `https://csp.greekssurge.com`, validates it through `/api/auth/me`, and stores it in the local user-only token file. It never asks for your Google password or requires token copy/paste.
 
 2. Add the local stdio server to your MCP client:
 
@@ -35,8 +31,8 @@ Use the client-specific command or JSON from the setup docs below.
 The canonical package is published on npm. If npm is unavailable, use the matching GitHub release explicitly in the same command position:
 
 ```sh
-npx -y github:neerazz/greekssurge-mcp#v0.1.0 auth login
-npx -y github:neerazz/greekssurge-mcp#v0.1.0
+npx -y github:neerazz/greekssurge-mcp#v0.1.1 auth login
+npx -y github:neerazz/greekssurge-mcp#v0.1.1
 ```
 
 The canonical package spec is `greekssurge-mcp`; the GitHub form is fallback-only.
@@ -58,7 +54,7 @@ npx -y greekssurge-mcp setup
 
 ## Transport status
 
-Local stdio is the only shipped transport in v0.1.0.
+Local stdio is the only shipped transport in v0.1.1.
 
 Hosted Streamable HTTP/OAuth is not shipped because `csp.greekssurge.com` lacks the required OAuth discovery/backend contract for a compliant remote MCP endpoint. Do not configure a remote URL for this version; use local stdio.
 
@@ -82,9 +78,8 @@ All tools are read-only and return structured content with source, retrieval tim
 ## Security and privacy summary
 
 - No Google password collection.
-- Local login uses the operating system default browser and an exact random-port `127.0.0.1/callback` redirect.
-- State and S256 PKCE bind the browser request to the CLI; only a short-lived, one-time code returns through the browser.
-- Exchanged tokens are validated against `/api/auth/me` before storage.
+- Local login imports the existing session only from an exact-origin GreeksSurge BrowserOS tab over BrowserOS's loopback-only DevTools endpoint.
+- Imported tokens are validated against `/api/auth/me` before storage; failed validation preserves the prior local credential.
 - Tokens are stored per OS under the local user profile with POSIX `0600` permissions on macOS/Linux and user-scoped Windows ACLs on Windows.
 - `greekssurge-mcp auth logout` deletes the local token; revoke the upstream GreeksSurge/Google session if a device or token leaks.
 - Returned article text is treated as untrusted external content, never instructions.

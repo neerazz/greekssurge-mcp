@@ -13,13 +13,13 @@ npx -y greekssurge-mcp --version
 If npm is unavailable, use the matching GitHub release explicitly:
 
 ```sh
-npx -y github:neerazz/greekssurge-mcp#v0.1.0 --version
-npx -y github:neerazz/greekssurge-mcp#v0.1.0 auth login
+npx -y github:neerazz/greekssurge-mcp#v0.1.1 --version
+npx -y github:neerazz/greekssurge-mcp#v0.1.1 auth login
 ```
 
 The canonical published command is `npx -y greekssurge-mcp`; the GitHub form is fallback-only.
 
-## Authentication times out
+## Authentication import fails
 
 Run:
 
@@ -27,9 +27,9 @@ Run:
 npx -y greekssurge-mcp auth login
 ```
 
-Complete Google login and the GreeksSurge authorization confirmation in your operating system default browser. Do not paste a token into your MCP client config. The CLI does not collect your Google password or read browser storage.
+Start BrowserOS, open `https://csp.greekssurge.com`, and complete the normal Google login there. Keep that exact-origin tab open, then rerun `auth login`. Do not paste a token into your MCP client configuration. The CLI reads the existing BrowserOS session locally and validates it through `/api/auth/me` before storing it.
 
-If the browser does not open, verify the operating system can open an HTTPS link with its configured default browser. If the CLI reports an authorization-endpoint or code-exchange error, the required `/api/auth/mcp/authorize` and `/api/auth/mcp/token` backend contract is not deployed; retrying or changing browsers will not fix that server-side blocker.
+If import still fails, verify `~/.browseros/server.json` exists and BrowserOS reports a live local DevTools connection. A tab on a lookalike hostname is rejected deliberately.
 
 ## Client connects but authenticated tools fail
 
@@ -49,7 +49,7 @@ Then re-run login.
 
 ## Remote URL setup fails
 
-Local stdio is the only shipped transport in v0.1.0.
+Local stdio is the only shipped transport in v0.1.1.
 
 Hosted Streamable HTTP/OAuth is not shipped because `csp.greekssurge.com` lacks the required OAuth discovery/backend contract. Remove remote MCP URL configuration and use the local stdio setup from the relevant client doc.
 

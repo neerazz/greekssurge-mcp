@@ -6,9 +6,7 @@ describe("loadConfig", () => {
     const config = loadConfig({ HOME: "/tmp/home" });
 
     expect(config.apiBaseUrl.toString()).toBe("https://csp.greekssurge.com/");
-    expect(config.authIssuerUrl.toString()).toBe(
-      "https://csp.greekssurge.com/",
-    );
+
     expect(config.transport).toBe("stdio");
     expect(config.host).toBe("127.0.0.1");
     expect(config.port).toBe(3333);
@@ -20,7 +18,7 @@ describe("loadConfig", () => {
     const config = loadConfig({
       HOME: "/tmp/home",
       GREEKSSURGE_API_BASE_URL: "https://example.test/api-root",
-      GREEKSSURGE_AUTH_ISSUER: "https://auth.example.test",
+
       MCP_TRANSPORT: "http",
       HOST: "localhost",
       PORT: "8088",
@@ -29,7 +27,7 @@ describe("loadConfig", () => {
     });
 
     expect(config.apiBaseUrl.toString()).toBe("https://example.test/api-root/");
-    expect(config.authIssuerUrl.toString()).toBe("https://auth.example.test/");
+
     expect(config.transport).toBe("http");
     expect(config.host).toBe("localhost");
     expect(config.port).toBe(8088);

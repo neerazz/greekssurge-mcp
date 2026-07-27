@@ -8,7 +8,7 @@ Grounded official docs: https://modelcontextprotocol.io/docs/develop/connect-loc
 npx -y greekssurge-mcp auth login
 ```
 
-Until npm publication, use `npx -y github:neerazz/greekssurge-mcp#v0.1.0 auth login`.
+Until npm publication, use `npx -y github:neerazz/greekssurge-mcp#v0.1.1 auth login`.
 
 2. Merge this read-only local stdio server entry into the top-level `mcpServers` object:
 
@@ -23,7 +23,7 @@ Until npm publication, use `npx -y github:neerazz/greekssurge-mcp#v0.1.0 auth lo
 }
 ```
 
-Until npm publication, replace `greekssurge-mcp` with `github:neerazz/greekssurge-mcp#v0.1.0`.
+Until npm publication, replace `greekssurge-mcp` with `github:neerazz/greekssurge-mcp#v0.1.1`.
 
 3. Verify by calling `get_account` from Claude Desktop.
 

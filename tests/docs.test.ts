@@ -27,7 +27,7 @@ describe("public release documentation", () => {
     expect(readme).toContain("npx -y greekssurge-mcp auth login");
     expect(readme).toContain("npx -y greekssurge-mcp");
     expect(readme).toMatch(/verify[^\n]+get_account/i);
-    expect(readme).toContain("github:neerazz/greekssurge-mcp#v0.1.0");
+    expect(readme).toContain("github:neerazz/greekssurge-mcp#v0.1.1");
     expect(readme).toMatch(/published on npm/i);
     expect(readme).toMatch(/fallback-only/i);
     expect(readme).toContain("https://github.com/neerazz/greekssurge-mcp");
@@ -40,11 +40,11 @@ describe("public release documentation", () => {
       expect(readme).toContain(`docs/clients/${client}.md`);
   });
 
-  it("discloses v0.1.0 local-only transport and the real remote blocker", async () => {
+  it("discloses v0.1.1 local-only transport and the real remote blocker", async () => {
     const corpus = `${await read(docs.readme)}\n${await read(docs.architecture)}\n${await read(docs.troubleshooting)}`;
 
     expect(corpus).toMatch(
-      /local stdio is the only shipped transport in v0\.1\.0/i,
+      /local stdio is the only shipped transport in v0\.1\.1/i,
     );
     expect(corpus).toMatch(/Streamable HTTP\/OAuth[^\n]+not shipped/i);
     expect(corpus).toMatch(
@@ -60,9 +60,9 @@ describe("public release documentation", () => {
 
     for (const required of [
       "No Google password collection",
-      "operating system default browser",
-      "127.0.0.1 loopback",
-      "S256 PKCE",
+      "BrowserOS",
+      "loopback-only DevTools endpoint",
+      "localStorage.gs_token",
       "/api/auth/me",
       "macOS: ~/Library/Application Support/greekssurge-mcp/token.json",
       "Linux: ${XDG_CONFIG_HOME:-~/.config}/greekssurge-mcp/token.json",
@@ -75,7 +75,9 @@ describe("public release documentation", () => {
     ]) {
       expect(security).toContain(required);
     }
-    expect(security).not.toMatch(/Chromium|Chrome|CDP|localStorage/i);
+    expect(security).toMatch(
+      /No token is accepted through CLI arguments, stdout, logs, clipboard, or manual paste/i,
+    );
   });
 
   it("states read-only boundaries, untrusted-content handling, and licensing split", async () => {
@@ -99,7 +101,7 @@ describe("public release documentation", () => {
     expect(contributing).toContain("npm ci");
     expect(contributing).toContain("npm run prepublishOnly");
     expect(codeOfConduct).toContain("Contributor Covenant");
-    expect(troubleshooting).toContain("github:neerazz/greekssurge-mcp#v0.1.0");
+    expect(troubleshooting).toContain("github:neerazz/greekssurge-mcp#v0.1.1");
     expect(troubleshooting).toMatch(/canonical published command/i);
     expect(troubleshooting).toMatch(/fallback-only/i);
   });

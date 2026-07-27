@@ -12,7 +12,7 @@ export function createGreeksSurgeMcpServer(
   options: CreateGreeksSurgeMcpServerOptions,
 ): McpServer {
   const server = new McpServer(
-    { name: "greekssurge-mcp", version: "0.1.0" },
+    { name: "greekssurge-mcp", version: "0.1.1" },
     { instructions: SERVER_INSTRUCTIONS },
   );
   registerGreeksSurgeTools({

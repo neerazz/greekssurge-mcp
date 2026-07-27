@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { GreeksSurgeClient } from "./api/client.js";
 import { FileTokenStore } from "./auth/token-store.js";
 import { runLocalLogin, validateTokenWithApi } from "./auth/local-login.js";
+import { readBrowserOsToken } from "./auth/browseros-session.js";
 import { createGreeksSurgeMcpServer } from "./mcp/create-server.js";
 import { loadConfig } from "./config.js";
 import { createLogger } from "./logger.js";
@@ -23,12 +24,12 @@ export interface CliIO {
   stderr?: (text: string) => void;
 }
 
-const VERSION = "0.1.0";
+const VERSION = "0.1.1";
 const HELP = `greekssurge-mcp ${VERSION}
 
 Commands:
   greekssurge-mcp [serve]              Start the read-only MCP stdio server
-  greekssurge-mcp auth login           Open GreeksSurge Google login in the operating system default browser
+  greekssurge-mcp auth login           Import the current signed-in GreeksSurge BrowserOS session
   greekssurge-mcp auth status          Show whether a local GreeksSurge token is stored
   greekssurge-mcp auth logout          Delete the local GreeksSurge token
   greekssurge-mcp setup                Print client setup guidance
@@ -157,15 +158,14 @@ async function authCommand(
     )
       return rejectAuthFlags(stderr);
     if (args.includes("--dry-run")) {
-      const loginUrl = new URL("/api/auth/mcp/authorize", config.authIssuerUrl);
       stdout(
-        `Dry run: would open the operating system default browser to ${loginUrl.toString()} and return through a protected 127.0.0.1 loopback callback. Google credentials are never collected.\n`,
+        "Dry run: would import the existing signed-in GreeksSurge session from an exact-origin BrowserOS tab, validate it through /api/auth/me, and store it locally with owner-only permissions.\n",
       );
       return 0;
     }
     const result = await runLocalLogin({
-      issuerUrl: config.authIssuerUrl,
       store,
+      readBrowserToken: () => readBrowserOsToken(),
       validateToken: (token) => validateTokenWithApi(config.apiBaseUrl, token),
     });
     stdout(`Authenticated${result.tier ? ` as ${result.tier}` : ""}.\n`);

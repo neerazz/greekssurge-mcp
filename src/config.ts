@@ -4,7 +4,6 @@ import { z } from "zod";
 
 export interface AppConfig {
   apiBaseUrl: URL;
-  authIssuerUrl: URL;
   transport: "stdio" | "http";
   host: string;
   port: number;
@@ -52,7 +51,6 @@ const httpsUrl = (name: string, allowLocalHttp = false) =>
 
 const envSchema = z.object({
   GREEKSSURGE_API_BASE_URL: httpsUrl("GREEKSSURGE_API_BASE_URL", true),
-  GREEKSSURGE_AUTH_ISSUER: httpsUrl("GREEKSSURGE_AUTH_ISSUER"),
   MCP_TRANSPORT: z.enum(["stdio", "http"]).default("stdio"),
   HOST: z.string().min(1).default("127.0.0.1"),
   PORT: z.coerce.number().int().min(1).max(65_535).default(3333),
@@ -102,7 +100,6 @@ export function loadConfig(env: Env = process.env): AppConfig {
   const data = parsed.data;
   return {
     apiBaseUrl: data.GREEKSSURGE_API_BASE_URL,
-    authIssuerUrl: data.GREEKSSURGE_AUTH_ISSUER,
     transport: data.MCP_TRANSPORT,
     host: data.HOST,
     port: data.PORT,

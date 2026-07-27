@@ -77,8 +77,8 @@ describe("package metadata", () => {
     );
     expect(pkg.dependencies?.["@modelcontextprotocol/sdk"]).toBe("1.29.0");
     expect(pkg.dependencies?.zod).toMatch(/^\^4\./);
-    expect(pkg.dependencies).not.toHaveProperty("ws");
-    expect(pkg.devDependencies).not.toHaveProperty("@types/ws");
+    expect(pkg.dependencies?.ws).toMatch(/^\^8\./);
+    expect(pkg.devDependencies?.["@types/ws"]).toMatch(/^\^8\./);
     expect(pkg.dependencies).not.toHaveProperty("express");
     expect(pkg.dependencies).not.toHaveProperty("express-rate-limit");
   });
