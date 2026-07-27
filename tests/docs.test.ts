@@ -7,16 +7,46 @@ const docs = {
   security: "SECURITY.md",
   contributing: "CONTRIBUTING.md",
   codeOfConduct: "CODE_OF_CONDUCT.md",
-  architecture: "docs/architecture.md",
-  troubleshooting: "docs/troubleshooting.md",
 };
-const clientDocs = [
-  "claude-code",
-  "codex",
-  "gemini",
-  "claude-desktop",
-  "cursor",
-  "vscode",
+
+// `docs/` is local-only working material: gitignored and unpublished. Everything an
+// end user needs must therefore be reachable from README.md alone.
+const clientSetups = [
+  [
+    "Claude Code",
+    "claude mcp add --scope user greekssurge -- npx -y greekssurge-mcp",
+  ],
+  ["Codex CLI", "codex mcp add greekssurge -- npx -y greekssurge-mcp"],
+  [
+    "Gemini CLI",
+    "gemini mcp add --scope user --transport stdio greekssurge npx -y greekssurge-mcp",
+  ],
+  ["Claude Desktop", "claude_desktop_config.json"],
+  ["Cursor", "~/.cursor/mcp.json"],
+  ["VS Code", '"servers"'],
+] as const;
+
+const promptNames = [
+  "account_overview",
+  "screen_ideas",
+  "performance_retrospective",
+  "assignment_review",
+  "watchlist_digest",
+  "learn_concept",
+  "learning_path",
+] as const;
+
+const toolNames = [
+  "get_account",
+  "get_market_status",
+  "list_trade_ideas",
+  "get_available_filters",
+  "get_performance_stats",
+  "list_trade_history",
+  "list_education",
+  "get_education_article",
+  "get_watchlist",
+  "get_preferences",
 ] as const;
 
 describe("public release documentation", () => {
@@ -33,24 +63,41 @@ describe("public release documentation", () => {
     expect(readme).toContain("https://github.com/neerazz/greekssurge-mcp");
   });
 
-  it("links all six client setup documents from the README", async () => {
+  it("carries setup for every supported client inline, with no links into gitignored docs/", async () => {
     const readme = await read(docs.readme);
 
-    for (const client of clientDocs)
-      expect(readme).toContain(`docs/clients/${client}.md`);
+    for (const [client, marker] of clientSetups) {
+      expect(readme).toContain(client);
+      expect(readme).toContain(marker);
+    }
+    // docs/ is not published, so the README must never send a reader there.
+    expect(readme).not.toMatch(/\]\(docs\//);
+    expect(readme).not.toMatch(/docs\/clients/);
+    expect(readme).not.toMatch(
+      /docs\/architecture\.md|docs\/troubleshooting\.md/,
+    );
+  });
+
+  it("documents every tool and every prompt an end user can invoke", async () => {
+    const readme = await read(docs.readme);
+
+    for (const tool of toolNames) expect(readme).toContain(`\`${tool}\``);
+    for (const prompt of promptNames) expect(readme).toContain(`\`${prompt}\``);
+    expect(readme).toMatch(/##\s+Prompts/);
+    expect(readme).toMatch(/##\s+Troubleshooting/);
   });
 
   it("discloses v0.1.1 local-only transport and the real remote blocker", async () => {
-    const corpus = `${await read(docs.readme)}\n${await read(docs.architecture)}\n${await read(docs.troubleshooting)}`;
+    const readme = await read(docs.readme);
 
-    expect(corpus).toMatch(
+    expect(readme).toMatch(
       /local stdio is the only shipped transport in v0\.1\.1/i,
     );
-    expect(corpus).toMatch(/Streamable HTTP\/OAuth[^\n]+not shipped/i);
-    expect(corpus).toMatch(
+    expect(readme).toMatch(/Streamable HTTP\/OAuth[^\n]+not shipped/i);
+    expect(readme).toMatch(
       /csp\.greekssurge\.com[^\n]+lacks[^\n]+OAuth discovery\/backend contract/i,
     );
-    expect(corpus).not.toMatch(
+    expect(readme).not.toMatch(
       /hosted[^\n]+ready|remote[^\n]+works|Streamable HTTP[^\n]+available/i,
     );
   });
@@ -81,7 +128,7 @@ describe("public release documentation", () => {
   });
 
   it("states read-only boundaries, untrusted-content handling, and licensing split", async () => {
-    const corpus = `${await read(docs.readme)}\n${await read(docs.security)}\n${await read(docs.architecture)}`;
+    const corpus = `${await read(docs.readme)}\n${await read(docs.security)}`;
 
     expect(corpus).toMatch(/read-only/i);
     expect(corpus).toMatch(/no trading/i);
@@ -89,20 +136,23 @@ describe("public release documentation", () => {
     expect(corpus).toMatch(/untrusted external content/i);
     expect(corpus).toMatch(/MIT/i);
     expect(corpus).toMatch(
-      /GreeksSurge data and service access[^\n]+GreeksSurge terms/i,
+      /GreeksSurge data and service access[^\n]+GreeksSurge terms/,
     );
   });
 
-  it("keeps contributor docs and troubleshooting usable before publication", async () => {
+  it("keeps end-user troubleshooting in the README and contributor docs usable", async () => {
+    const readme = await read(docs.readme);
     const contributing = await read(docs.contributing);
     const codeOfConduct = await read(docs.codeOfConduct);
-    const troubleshooting = await read(docs.troubleshooting);
 
     expect(contributing).toContain("npm ci");
     expect(contributing).toContain("npm run prepublishOnly");
     expect(codeOfConduct).toContain("Contributor Covenant");
-    expect(troubleshooting).toContain("github:neerazz/greekssurge-mcp#v0.1.1");
-    expect(troubleshooting).toMatch(/canonical published command/i);
-    expect(troubleshooting).toMatch(/fallback-only/i);
+
+    // Troubleshooting used to live in docs/troubleshooting.md; it must survive in the README.
+    expect(readme).toContain("github:neerazz/greekssurge-mcp#v0.1.1");
+    expect(readme).toMatch(/canonical published command/i);
+    expect(readme).toMatch(/auth logout/);
+    expect(readme).toMatch(/premiumMasked/);
   });
 });

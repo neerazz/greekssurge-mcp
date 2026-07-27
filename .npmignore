@@ -5,7 +5,7 @@ node_modules
 .git
 .github
 scripts
-docs/superpowers
+docs
 *.log
 *.tgz
 .env

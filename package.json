@@ -33,8 +33,7 @@
     "dist",
     "README.md",
     "LICENSE",
-    "SECURITY.md",
-    "docs/clients/*.md"
+    "SECURITY.md"
   ],
   "scripts": {
     "build": "node scripts/clean-dist.mjs && tsc -p tsconfig.json",

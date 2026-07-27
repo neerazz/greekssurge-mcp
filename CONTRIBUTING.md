@@ -43,7 +43,9 @@ Use RED-GREEN TDD for behavior changes:
 
 ## Package boundary
 
-The public package should contain only `dist`, `README.md`, `LICENSE`, `SECURITY.md`, and `docs/clients/*.md` plus npm's required package metadata. Internal superpowers specs, tests, source TypeScript, workflows, and scripts are not shipped in the tarball.
+The public package should contain only `dist`, `README.md`, `LICENSE`, and `SECURITY.md` plus npm's required package metadata. Tests, source TypeScript, workflows, scripts, and the whole `docs/` tree are not shipped in the tarball.
+
+`docs/` is local-only working material: it is gitignored and not published. Anything an end user needs must live in `README.md`, which is intentionally self-contained.
 
 ## Security expectations
 

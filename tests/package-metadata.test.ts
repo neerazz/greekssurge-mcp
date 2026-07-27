@@ -34,13 +34,7 @@ describe("package metadata", () => {
         "read-only",
       ]),
     );
-    expect(pkg.files).toEqual([
-      "dist",
-      "README.md",
-      "LICENSE",
-      "SECURITY.md",
-      "docs/clients/*.md",
-    ]);
+    expect(pkg.files).toEqual(["dist", "README.md", "LICENSE", "SECURITY.md"]);
   });
 
   it("has the expected development scripts and dependency pins", async () => {
@@ -89,7 +83,7 @@ describe("package metadata", () => {
     expect(npmIgnore).toContain("src");
     expect(npmIgnore).toContain("tests");
     expect(npmIgnore).toContain("coverage");
-    expect(npmIgnore).toContain("docs/superpowers");
+    expect(npmIgnore).toContain("docs");
     expect(npmIgnore).toContain(".github");
     expect(npmIgnore).toContain("scripts");
     expect(npmIgnore).toContain("*.tgz");

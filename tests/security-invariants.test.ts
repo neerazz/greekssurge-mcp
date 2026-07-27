@@ -1,6 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { registerGreeksSurgePrompts } from "../src/mcp/prompts.js";
 import { registerGreeksSurgeTools } from "../src/mcp/tools.js";
 
 async function walk(dir: string): Promise<string[]> {
@@ -19,8 +20,6 @@ const releaseTrackedFiles = [
   "SECURITY.md",
   "CONTRIBUTING.md",
   "CODE_OF_CONDUCT.md",
-  "docs/architecture.md",
-  "docs/troubleshooting.md",
   "package.json",
   ".npmignore",
 ];
@@ -87,9 +86,10 @@ describe("security invariants", () => {
   });
 
   it("does not commit token-like release content outside clearly synthetic test markers", async () => {
+    // Release-facing docs plus tests. Source is covered separately by
+    // `npm run scan:secrets`, which understands code shapes.
     const files = [
       ...releaseTrackedFiles,
-      ...(await walk("docs/clients")).filter((path) => path.endsWith(".md")),
       ...(await walk("tests")).filter((path) => path.endsWith(".test.ts")),
     ];
     const tokenPattern =
@@ -112,24 +112,58 @@ describe("security invariants", () => {
   it("keeps the package publish allowlist narrow and excludes internal specs", async () => {
     const pkg = JSON.parse(await readFile("package.json", "utf8"));
     const npmIgnore = await readFile(".npmignore", "utf8");
+    const gitIgnore = await readFile(".gitignore", "utf8");
 
-    expect(pkg.files).toEqual([
-      "dist",
-      "README.md",
-      "LICENSE",
-      "SECURITY.md",
-      "docs/clients/*.md",
-    ]);
-    expect(JSON.stringify(pkg.files)).not.toContain("docs/superpowers");
+    expect(pkg.files).toEqual(["dist", "README.md", "LICENSE", "SECURITY.md"]);
+    // docs/ is local working material: neither published nor pushed.
+    expect(JSON.stringify(pkg.files)).not.toContain("docs");
+    expect(gitIgnore).toMatch(/^docs\/$/m);
     for (const denied of [
       "src",
       "tests",
-      "docs/superpowers",
+      "docs",
       ".github",
       "scripts",
       "*.tgz",
     ])
       expect(npmIgnore).toContain(denied);
+  });
+
+  it("keeps every prompt read-only, guardrailed, and free of injected instructions", () => {
+    const registered: Array<{
+      name: string;
+      config: { title?: string; description?: string };
+      text: string;
+    }> = [];
+    registerGreeksSurgePrompts({
+      register: (name, config, handler) => {
+        const result = handler({
+          ticker: "ASTS",
+          topic: "cash-secured-puts",
+          outcome: "ASSIGNED",
+        });
+        registered.push({
+          name,
+          config,
+          text: result.messages.map((m) => m.content.text).join("\n"),
+        });
+      },
+    });
+
+    expect(registered).toHaveLength(7);
+    for (const prompt of registered) {
+      expect(prompt.config.title).toBeTruthy();
+      expect(prompt.config.description).toBeTruthy();
+      // Every prompt must restate the read-only and no-advice boundaries.
+      expect(prompt.text).toMatch(/read-only/i);
+      expect(prompt.text).toMatch(/not financial advice/i);
+      expect(prompt.text).toMatch(/untrusted data/i);
+      // Prompts must never instruct the model to trade or invent values.
+      expect(prompt.text).not.toMatch(
+        /\b(?:place|submit|execute|cancel)\s+(?:an?\s+)?(?:order|trade)/i,
+      );
+      expect(prompt.text).not.toMatch(/gs_token|Authorization:|Bearer /);
+    }
   });
 
   it("scans the complete public source tree rather than only package docs", async () => {
