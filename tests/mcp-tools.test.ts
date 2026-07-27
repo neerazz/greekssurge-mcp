@@ -171,6 +171,7 @@ describe("GreeksSurge MCP tools", () => {
 
     expect(tools.tools.map((tool) => tool.name).sort()).toEqual(
       [
+        "analyze_ticker",
         "get_account",
         "get_available_filters",
         "get_education_article",
@@ -301,6 +302,13 @@ describe("GreeksSurge MCP tools", () => {
       get_education_article: ["slug", "title", "contentText", "contentTrust"],
       get_watchlist: ["tickers"],
       get_preferences: ["watchlistIdeasOnly", "watchlistAlertsOnly"],
+      analyze_ticker: [
+        "indicators",
+        "downsideFactors",
+        "openIdeas",
+        "history",
+        "limitations",
+      ],
     };
 
     for (const tool of tools.tools) {

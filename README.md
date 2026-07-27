@@ -173,44 +173,88 @@ npx -y greekssurge-mcp setup
 
 ## Tools
 
-Ten read-only tools. Every response carries the source URL, a retrieval timestamp, and
+Eleven read-only tools. Every response carries the source URL, a retrieval timestamp, and
 an educational disclosure.
 
-| Tool                    | Login | Returns                                                                                            |
-| ----------------------- | :---: | -------------------------------------------------------------------------------------------------- |
-| `get_account`           |  ✅   | Tier, lifetime-free status, feature flags, whether premium values are masked                       |
-| `get_market_status`     |   —   | Whether the market is currently open                                                               |
-| `list_trade_ideas`      |  ✅   | Current tier-scoped ideas · filters: `ticker` `expiry` `roi` `pop` `capital` `mode` `page` `limit` |
-| `get_available_filters` |   —   | Valid filter buckets, screenable tickers and expiries                                              |
-| `get_performance_stats` |  ✅   | Premium totals, win rate, streaks, max drawdown, per-ticker and monthly breakdowns                 |
-| `list_trade_history`    |  ✅   | Settled trades · filters: `symbol` `outcome` `ideaMode` `from` `to` `page` `limit`                 |
-| `list_education`        |   —   | Ordered course lessons plus your completion progress                                               |
-| `get_education_article` |   —   | One lesson by `slug`, as sanitized plain text                                                      |
-| `get_watchlist`         |  ✅   | Saved watchlist tickers                                                                            |
-| `get_preferences`       |  ✅   | Watchlist-only ideas/alerts flags                                                                  |
+| Tool                    | Login | Returns                                                                                                    |
+| ----------------------- | :---: | ---------------------------------------------------------------------------------------------------------- |
+| `get_account`           |  ✅   | Tier, lifetime-free status, feature flags, whether premium values are masked                               |
+| `get_market_status`     |   —   | Whether the market is currently open                                                                       |
+| `list_trade_ideas`      |  ✅   | Current tier-scoped ideas · filters: `ticker` `expiry` `roi` `pop` `capital` `mode` `page` `limit`         |
+| `get_available_filters` |   —   | Valid filter buckets, screenable tickers and expiries                                                      |
+| `get_performance_stats` |  ✅   | Premium totals, win rate, streaks, max drawdown, per-ticker and monthly breakdowns                         |
+| `list_trade_history`    |  ✅   | Settled trades · filters: `symbol` `outcome` `ideaMode` `from` `to` `page` `limit`                         |
+| `list_education`        |   —   | Ordered course lessons plus your completion progress                                                       |
+| `get_education_article` |   —   | One lesson by `slug`, as sanitized plain text                                                              |
+| `get_watchlist`         |  ✅   | Saved watchlist tickers                                                                                    |
+| `get_preferences`       |  ✅   | Watchlist-only ideas/alerts flags                                                                          |
+| `analyze_ticker`        |  ✅   | Derived indicators and named downside factors for one `ticker` — see [Derived analysis](#derived-analysis) |
 
 Article and description text comes back as **untrusted external content**. Your client
 should summarize it as data, never follow it as instructions.
 
+## Derived analysis
+
+Ten of the tools return what GreeksSurge publishes. `analyze_ticker` computes what it
+does not: it joins a ticker's open ideas to how that same ticker has actually settled in
+your account, and reports the arithmetic behind every number.
+
+The math runs in the server rather than in the model, so twenty rows of division give the
+same answer every time. Every indicator ships a `basis` field carrying its formula, so
+you can check a measurement instead of trusting it.
+
+**Indicators** — cushion to break-even, probability OTM, assignment risk, ROI,
+annualized ROI, premium per point of assignment risk, capital blocked, historical
+assignment rate, net premium per settled trade, settled trade count.
+
+**Downside factors**, each named with a severity and its evidence:
+
+| Factor                                   | What it catches                                                                                          |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `loss_asymmetry`                         | A high win rate sitting on a negative net premium: frequent small wins, rare large losses                |
+| `roi_understates_assigned_losses`        | Assigned rows are recorded with `roi: 0`, not a negative ROI, so ROI averages count a loss as break-even |
+| `assignment_depth`                       | How far past the strike assignments actually went, approximated from the closing option price            |
+| `assignment_rate_above_portfolio`        | This ticker is assigned more often than your account average                                             |
+| `leveraged_instrument`                   | A leveraged underlying reaches the strike faster than its buffer suggests                                |
+| `thin_buffer`, `short_dated_thin_buffer` | Little cushion to break-even, and little time to recover from a gap down                                 |
+| `elevated_premium`                       | Large premium is the market pricing a large expected move, not free yield                                |
+| `low_probability_otm`                    | Below the lowest published probability band                                                              |
+| `source_count_disagreement`              | Performance stats and trade history report different counts for the same ticker                          |
+| `small_sample`, `no_settled_history`     | Too few settled trades for a win rate to mean anything                                                   |
+
+Three things worth knowing, because they change how the published numbers read:
+
+- **Break-even sits below the strike.** Losses start at `strike - premium`, not at the
+  strike, so the true cushion is wider than the published buffer.
+- **Win rate can point the opposite way to money.** A ticker can win 85% of the time and
+  still be net negative.
+- **Assignment loss size is not published.** Assigned rows keep `premiumCollected`
+  positive and set `roi` to 0, so depth is approximated rather than reported.
+
+It reports measurements and risks. It does not rank tickers and does not tell you what
+to trade.
+
 ## Prompts
 
-Seven prompts ship with the server, usually surfaced as slash commands. Each one calls
+Eight prompts ship with the server, usually surfaced as slash commands. Each one calls
 the right tools in the right order and forbids inventing numbers.
 
-| Prompt                      | Arguments                                      | Does                                                                   |
-| --------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------- |
-| `account_overview`          | —                                              | Confirms the connection and what your tier can reach                   |
-| `screen_ideas`              | `ticker` `expiry` `roi` `pop` `capital` `mode` | Validates your filters against real buckets, then ranks matches by ROI |
-| `performance_retrospective` | —                                              | Win rate, streaks, drawdown, monthly trend, top tickers by premium     |
-| `assignment_review`         | `outcome` `symbol` `from` `to`                 | Groups settled trades by outcome, finds repeat underperformers         |
-| `watchlist_digest`          | —                                              | Cross-references your watchlist against the live idea feed             |
-| `learn_concept`             | `topic`                                        | Teaches one course lesson, treating article text as untrusted data     |
-| `learning_path`             | —                                              | Whole course in order, with progress and remaining read time           |
+| Prompt                      | Arguments                                      | Does                                                                                                  |
+| --------------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `account_overview`          | —                                              | Confirms the connection and what your tier can reach                                                  |
+| `screen_ideas`              | `ticker` `expiry` `roi` `pop` `capital` `mode` | Validates your filters against real buckets, then ranks matches by ROI                                |
+| `ticker_downside_review`    | `ticker`                                       | What is being measured, what would take the stock through the strike, and what the numbers do not say |
+| `performance_retrospective` | —                                              | Win rate, streaks, drawdown, monthly trend, top tickers by premium                                    |
+| `assignment_review`         | `outcome` `symbol` `from` `to`                 | Groups settled trades by outcome, finds repeat underperformers                                        |
+| `watchlist_digest`          | —                                              | Cross-references your watchlist against the live idea feed                                            |
+| `learn_concept`             | `topic`                                        | Teaches one course lesson, treating article text as untrusted data                                    |
+| `learning_path`             | —                                              | Whole course in order, with progress and remaining read time                                          |
 
 All arguments are optional.
 
 ```
 /screen_ideas ticker=ASTS roi=2-3
+/ticker_downside_review ticker=ASTS
 /assignment_review outcome=ASSIGNED
 /learn_concept topic=cash-secured-puts
 ```

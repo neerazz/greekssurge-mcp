@@ -74,7 +74,7 @@ describe("security invariants", () => {
     }> = [];
     registerOnly(registered);
 
-    expect(registered).toHaveLength(10);
+    expect(registered).toHaveLength(11);
     for (const tool of registered) {
       expect(tool.config.annotations).toMatchObject({
         readOnlyHint: true,
@@ -150,7 +150,7 @@ describe("security invariants", () => {
       },
     });
 
-    expect(registered).toHaveLength(7);
+    expect(registered).toHaveLength(8);
     for (const prompt of registered) {
       expect(prompt.config.title).toBeTruthy();
       expect(prompt.config.description).toBeTruthy();

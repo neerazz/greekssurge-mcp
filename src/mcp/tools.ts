@@ -1,5 +1,6 @@
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
+import { analyzeTicker } from "../analysis/ticker.js";
 import { GreeksSurgeApiError } from "../api/errors.js";
 import type { IdeasQuery, TradeHistoryQuery } from "../api/query.js";
 import type {
@@ -24,6 +25,7 @@ import {
   toMarketStatusData,
   toPerformanceStatsData,
   toPreferencesData,
+  toTickerAnalysisData,
   toTradeHistoryData,
   toTradeIdeasData,
   toWatchlistData,
@@ -105,6 +107,9 @@ const tradeHistoryInput = z
   })
   .strict();
 const articleInput = z.object({ slug: z.string().min(1).max(160) }).strict();
+const analyzeTickerInput = z
+  .object({ ticker: z.string().min(1).max(10) })
+  .strict();
 
 export function registerGreeksSurgeTools(options: ToolRegistryOptions): void {
   const add = <TData>(
@@ -205,6 +210,33 @@ export function registerGreeksSurgeTools(options: ToolRegistryOptions): void {
       toEducationArticleData(
         await client.getEducationArticle(String(args.slug)),
       ),
+  );
+  add(
+    "analyze_ticker",
+    "Derive cash-secured-put indicators and downside risk factors for one ticker, " +
+      "combining its open ideas with how that ticker has actually settled in this " +
+      "account. Reports measurements and named risk factors with the formula for " +
+      "each; it does not rank or recommend trades.",
+    analyzeTickerInput,
+    mcpDataSchemas.analyze_ticker,
+    true,
+    async (client, args) => {
+      const ticker = String(args.ticker);
+      // Upstream filters are best-effort, so analyzeTicker re-filters by ticker.
+      const [ideas, stats, settled] = await Promise.all([
+        client.listTradeIdeas({ ticker, limit: 100 } as IdeasQuery),
+        client.getPerformanceStats(),
+        client.listTradeHistory({ symbol: ticker, limit: 100 }),
+      ]);
+      return toTickerAnalysisData(
+        analyzeTicker({
+          ticker,
+          ideas: ideas.ideas,
+          stats,
+          settled: settled.ideas,
+        }),
+      );
+    },
   );
   add(
     "get_watchlist",

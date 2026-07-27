@@ -126,6 +126,54 @@ export function registerGreeksSurgePrompts(
   );
 
   options.register(
+    "ticker_downside_review",
+    {
+      title: "Ticker downside review",
+      description:
+        "For one ticker: what indicators are being measured, and what could take the stock through the strike.",
+      argsSchema: {
+        ticker: optionalArg(
+          "Ticker to review, e.g. ASTS. Required in practice.",
+        ),
+      },
+    },
+    (args) =>
+      userMessage(
+        [
+          args.ticker?.trim()
+            ? `Review ${args.ticker.trim().toUpperCase()} as a cash-secured-put candidate.`
+            : "Review a ticker as a cash-secured-put candidate. Ask me which ticker before calling anything.",
+          "",
+          "1. Call analyze_ticker for the ticker. It returns the derived measurements,",
+          "   the named downside factors, and the formula behind each indicator.",
+          "2. Call get_market_status so the reading is time-anchored.",
+          "",
+          "Structure your answer in three parts:",
+          "",
+          "A. What is being measured. Walk each indicator with its value and its `basis`",
+          "   formula, so I can see the arithmetic rather than trust it. Say plainly which",
+          "   ones come straight from GreeksSurge and which are derived.",
+          "",
+          "B. What would take this through the strike. Go through `downsideFactors`",
+          "   high severity first. For each open idea, state the break-even, the cushion to",
+          "   break-even, and the days left, then say how far the stock has to fall before",
+          "   the position is underwater. Note that break-even sits below the strike, so the",
+          "   strike is not the loss point.",
+          "",
+          "C. What the numbers do not say. Read `limitations` and repeat the ones that",
+          "   matter. In particular: if a high win rate sits next to a negative net premium,",
+          "   lead with that, because the win rate is the misleading number. If assigned rows",
+          "   are recorded with roi 0, say that ROI averages understate the losses.",
+          "",
+          "Do not rank this against other tickers and do not tell me whether to take the",
+          "trade. Give me the measurements and the risks, and let me decide.",
+          "",
+          GUARDRAIL,
+        ].join("\n"),
+      ),
+  );
+
+  options.register(
     "performance_retrospective",
     {
       title: "Performance retrospective",

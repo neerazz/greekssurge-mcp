@@ -47,6 +47,7 @@ const toolNames = [
   "get_education_article",
   "get_watchlist",
   "get_preferences",
+  "analyze_ticker",
 ] as const;
 
 describe("public release documentation", () => {

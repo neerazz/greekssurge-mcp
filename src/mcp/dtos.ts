@@ -11,6 +11,7 @@ import type {
   WatchlistResponse,
   MarketStatus,
 } from "../api/types.js";
+import type { TickerAnalysis } from "../analysis/ticker.js";
 import { EDUCATIONAL_NO_ADVICE_DISCLOSURE } from "./disclaimer.js";
 
 const SOURCE_URL = "https://csp.greekssurge.com" as const;
@@ -328,6 +329,83 @@ export const mcpDataSchemas = {
       related: z.array(educationPostSchema).max(100),
     })
     .strict(),
+  analyze_ticker: z
+    .object({
+      ticker,
+      companyName: boundedString(200).nullable(),
+      openIdeaCount: z.number().int().nonnegative(),
+      openIdeas: z
+        .array(
+          z
+            .object({
+              id,
+              displaySymbol: boundedString(160),
+              expiry: dateString,
+              strike: finiteNumber,
+              spot: nullableNumber,
+              premiumPerShare: finiteNumber,
+              breakEven: finiteNumber,
+              daysToExpiry: z.number().int().nonnegative().nullable(),
+              bufferToStrikePct: nullableNumber,
+              bufferToBreakEvenPct: nullableNumber,
+              probOtmPct: finiteNumber,
+              assignmentRiskPct: finiteNumber,
+              roiPct: finiteNumber,
+              annualizedRoiPct: nullableNumber,
+              premiumPerRiskUnit: nullableNumber,
+              capitalAtRisk: finiteNumber,
+              isLeveraged: z.boolean(),
+              ideaMode: boundedString(80),
+            })
+            .strict(),
+        )
+        .max(100),
+      history: z
+        .object({
+          trades: z.number().int().nonnegative(),
+          winRatePct: nullableNumber,
+          assignmentRatePct: nullableNumber,
+          netPremium: nullableNumber,
+          avgPremiumPerTrade: nullableNumber,
+          sampledRows: z.number().int().nonnegative(),
+          sampledAssignments: z.number().int().nonnegative(),
+          deepestAssignmentDepthPct: nullableNumber,
+        })
+        .strict(),
+      portfolioContext: z
+        .object({
+          portfolioAssignmentRatePct: nullableNumber,
+          portfolioWinRatePct: nullableNumber,
+          settledTradeCount: z.number().int().nonnegative().nullable(),
+        })
+        .strict(),
+      indicators: z
+        .array(
+          z
+            .object({
+              key: boundedString(80),
+              label: boundedString(200),
+              value: nullableNumber,
+              unit: z.enum(["percent", "usd", "days", "ratio", "count"]),
+              basis: boundedString(300),
+            })
+            .strict(),
+        )
+        .max(50),
+      downsideFactors: z
+        .array(
+          z
+            .object({
+              key: boundedString(80),
+              severity: z.enum(["high", "medium", "info"]),
+              detail: boundedString(800),
+            })
+            .strict(),
+        )
+        .max(50),
+      limitations: z.array(boundedString(500)).max(20),
+    })
+    .strict(),
   get_watchlist: z.object({ tickers: z.array(ticker).max(500) }).strict(),
   get_preferences: z
     .object({
@@ -462,6 +540,65 @@ export function toEducationArticleData(
       url: source.url,
     })),
     related: article.related.map(toEducationPostData),
+  };
+}
+
+export function toTickerAnalysisData(
+  analysis: TickerAnalysis,
+): McpToolData<"analyze_ticker"> {
+  return {
+    ticker: analysis.ticker,
+    companyName: analysis.companyName,
+    openIdeaCount: analysis.openIdeaCount,
+    openIdeas: capItems(analysis.openIdeas).map((idea) => ({
+      id: idea.id,
+      displaySymbol: idea.displaySymbol,
+      expiry: idea.expiry,
+      strike: idea.strike,
+      spot: idea.spot,
+      premiumPerShare: idea.premiumPerShare,
+      breakEven: idea.breakEven,
+      daysToExpiry: idea.daysToExpiry,
+      bufferToStrikePct: idea.bufferToStrikePct,
+      bufferToBreakEvenPct: idea.bufferToBreakEvenPct,
+      probOtmPct: idea.probOtmPct,
+      assignmentRiskPct: idea.assignmentRiskPct,
+      roiPct: idea.roiPct,
+      annualizedRoiPct: idea.annualizedRoiPct,
+      premiumPerRiskUnit: idea.premiumPerRiskUnit,
+      capitalAtRisk: idea.capitalAtRisk,
+      isLeveraged: idea.isLeveraged,
+      ideaMode: idea.ideaMode,
+    })),
+    history: {
+      trades: analysis.history.trades,
+      winRatePct: analysis.history.winRatePct,
+      assignmentRatePct: analysis.history.assignmentRatePct,
+      netPremium: analysis.history.netPremium,
+      avgPremiumPerTrade: analysis.history.avgPremiumPerTrade,
+      sampledRows: analysis.history.sampledRows,
+      sampledAssignments: analysis.history.sampledAssignments,
+      deepestAssignmentDepthPct: analysis.history.deepestAssignmentDepthPct,
+    },
+    portfolioContext: {
+      portfolioAssignmentRatePct:
+        analysis.portfolioContext.portfolioAssignmentRatePct,
+      portfolioWinRatePct: analysis.portfolioContext.portfolioWinRatePct,
+      settledTradeCount: analysis.portfolioContext.settledTradeCount,
+    },
+    indicators: analysis.indicators.map((indicator) => ({
+      key: indicator.key,
+      label: indicator.label,
+      value: indicator.value,
+      unit: indicator.unit,
+      basis: indicator.basis,
+    })),
+    downsideFactors: analysis.downsideFactors.map((factor) => ({
+      key: factor.key,
+      severity: factor.severity,
+      detail: factor.detail,
+    })),
+    limitations: analysis.limitations,
   };
 }
 
