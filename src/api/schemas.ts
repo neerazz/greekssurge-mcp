@@ -67,7 +67,9 @@ const idea = z.object({
   realizedRoi: nullableNumber,
   decayProfit: nullableNumber,
   companyName: boundedString(200),
-  optionSymbol: boundedString(80),
+  // Upstream stopped sending optionSymbol; it is never surfaced through any MCP
+  // tool, so accept its absence rather than failing the whole ideas payload.
+  optionSymbol: boundedString(80).optional(),
   executiveBrief: z.string().max(5_000).nullable().optional(),
   orderStatus: optionalString(80),
   ideaMode: boundedString(80),
@@ -185,6 +187,18 @@ const educationPillar = z.object({
   posts: z.array(educationPost).max(100),
 });
 
+// /api/education now returns an ordered course of lessons instead of a
+// pillar/post tree.
+const educationLesson = z.object({
+  slug: boundedString(160),
+  title: boundedString(200),
+  order: z.number().int().nonnegative(),
+  clusterTitle: boundedString(200),
+  icon: boundedString(80).optional(),
+  readMinutes: z.number().int().nonnegative(),
+  completed: booleanDefaultFalse,
+});
+
 export const upstreamSchemas = {
   status: z.object({
     isMarketOpen: z.boolean(),
@@ -237,7 +251,11 @@ export const upstreamSchemas = {
     total: z.number().int().nonnegative(),
     ideas: z.array(tradeHistoryIdea).max(100),
   }),
-  educationList: z.object({ pillars: z.array(educationPillar).max(100) }),
+  educationList: z.object({
+    course: z.array(educationLesson).max(100),
+    courseTotal: z.number().int().nonnegative().default(0),
+    completedSlugs: z.array(boundedString(160)).max(500).default([]),
+  }),
   educationArticle: educationPillar.omit({ posts: true }).extend({
     html: z.string().min(1).max(100_000),
     headings: z
@@ -256,6 +274,8 @@ export const upstreamSchemas = {
         }),
       )
       .max(100),
+    // Upstream no longer ships a sources list on articles; treat it as absent
+    // rather than a contract break.
     sources: z
       .array(
         z.object({
@@ -263,7 +283,8 @@ export const upstreamSchemas = {
           url: z.string().url().max(2_000),
         }),
       )
-      .max(100),
+      .max(100)
+      .default([]),
     related: z.array(educationPost).max(100),
   }),
   watchlist: z.object({

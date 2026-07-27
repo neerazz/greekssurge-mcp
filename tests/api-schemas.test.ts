@@ -98,6 +98,52 @@ describe("GreeksSurge upstream schemas", () => {
     );
   });
 
+  // Regression guards for upstream fields that were dropped in production and
+  // took three tools down with them. Each of these threw
+  // "Upstream contract changed" before being relaxed.
+  it("tolerates upstream dropping fields no MCP tool surfaces", async () => {
+    const ideas = (await fixture("ideas")) as {
+      ideas: Record<string, unknown>[];
+    };
+    for (const idea of ideas.ideas) delete idea.optionSymbol;
+    expect(() => parseUpstream("ideas", ideas)).not.toThrow();
+
+    const article = (await fixture("education-article")) as Record<
+      string,
+      unknown
+    >;
+    delete article.sources;
+    expect(parseUpstream("educationArticle", article).sources).toEqual([]);
+  });
+
+  it("parses the education course list and defaults optional progress fields", async () => {
+    const parsed = parseUpstream("educationList", await fixture("education"));
+
+    expect(parsed.course.length).toBeGreaterThan(0);
+    expect(parsed.course[0]).toMatchObject({
+      slug: expect.any(String),
+      order: expect.any(Number),
+      completed: expect.any(Boolean),
+    });
+    expect(parsed.courseTotal).toBe(parsed.course.length);
+
+    // completedSlugs/courseTotal are absent for unauthenticated callers.
+    const minimal = parseUpstream("educationList", {
+      course: [
+        {
+          slug: "stock-market-basics",
+          title: "Stock Market Basics",
+          order: 1,
+          clusterTitle: "Stock Market Basics",
+          readMinutes: 9,
+        },
+      ],
+    });
+    expect(minimal.completedSlugs).toEqual([]);
+    expect(minimal.courseTotal).toBe(0);
+    expect(minimal.course[0]?.completed).toBe(false);
+  });
+
   it("defines safe DTOs separately from raw upstream shapes", async () => {
     const account = toAccountDto(
       parseUpstream("authMe", await fixture("auth-me")),

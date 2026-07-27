@@ -237,6 +237,18 @@ const educationPillarSchema = z
   })
   .strict();
 
+const educationLessonSchema = z
+  .object({
+    slug: boundedString(160),
+    title: boundedString(200),
+    order: z.number().int().nonnegative(),
+    clusterTitle: boundedString(200),
+    icon: boundedString(80).optional(),
+    readMinutes: z.number().int().nonnegative(),
+    completed: z.boolean(),
+  })
+  .strict();
+
 const headingSchema = z
   .object({ id: boundedString(160), text: boundedString(300) })
   .strict();
@@ -298,7 +310,11 @@ export const mcpDataSchemas = {
     })
     .strict(),
   list_education: z
-    .object({ pillars: z.array(educationPillarSchema).max(100) })
+    .object({
+      lessons: z.array(educationLessonSchema).max(100),
+      total: z.number().int().nonnegative(),
+      completedSlugs: z.array(boundedString(160)).max(500),
+    })
     .strict(),
   get_education_article: educationPillarSchema
     .omit({ posts: true })
@@ -413,7 +429,11 @@ export function toTradeHistoryData(
 export function toEducationListData(
   response: EducationListResponse,
 ): McpToolData<"list_education"> {
-  return { pillars: capItems(response.pillars).map(toEducationPillarData) };
+  return {
+    lessons: capItems(response.course).map(toEducationLessonData),
+    total: response.courseTotal,
+    completedSlugs: capItems(response.completedSlugs),
+  };
 }
 
 export function toEducationArticleData(
@@ -560,25 +580,21 @@ function toSettledItemData(item: IdeasResponse["lastSettled"][number]) {
   };
 }
 
-function toEducationPillarData(
-  pillar: EducationListResponse["pillars"][number],
+function toEducationLessonData(
+  lesson: EducationListResponse["course"][number],
 ) {
   return {
-    slug: pillar.slug,
-    title: pillar.title,
-    description: pillar.description,
-    cluster: pillar.cluster,
-    clusterTitle: pillar.clusterTitle,
-    pillar: pillar.pillar,
-    updated: pillar.updated,
-    readMinutes: pillar.readMinutes,
-    posts: capItems(pillar.posts).map(toEducationPostData),
+    slug: lesson.slug,
+    title: lesson.title,
+    order: lesson.order,
+    clusterTitle: lesson.clusterTitle,
+    ...(lesson.icon !== undefined ? { icon: lesson.icon } : {}),
+    readMinutes: lesson.readMinutes,
+    completed: lesson.completed,
   };
 }
 
-function toEducationPostData(
-  post: EducationListResponse["pillars"][number]["posts"][number],
-) {
+function toEducationPostData(post: EducationArticle["related"][number]) {
   return {
     slug: post.slug,
     title: post.title,

@@ -117,7 +117,11 @@ function fakeClient(overrides: Record<string, unknown> = {}) {
       total: 0,
       ideas: [],
     }),
-    listEducation: async () => ({ pillars: [] }),
+    listEducation: async () => ({
+      course: [],
+      courseTotal: 0,
+      completedSlugs: [],
+    }),
     getEducationArticle: async () => ({
       slug: "covered-calls-basics",
       title: "Covered Calls Basics",
@@ -293,7 +297,7 @@ describe("GreeksSurge MCP tools", () => {
         "last_settled",
       ],
       list_trade_history: ["summary", "ideas", "page", "limit", "total"],
-      list_education: ["pillars"],
+      list_education: ["lessons", "total", "completedSlugs"],
       get_education_article: ["slug", "title", "contentText", "contentTrust"],
       get_watchlist: ["tickers"],
       get_preferences: ["watchlistIdeasOnly", "watchlistAlertsOnly"],
@@ -366,27 +370,20 @@ describe("GreeksSurge MCP tools", () => {
           rawDebug: rawPoison,
         }),
         listEducation: async () => ({
-          pillars: [
+          course: [
             {
               slug: "covered-calls-basics",
               title: "Covered Calls Basics",
-              description: "Sanitized article.",
-              cluster: "options-income",
+              order: 1,
               clusterTitle: "Options Income",
-              pillar: true,
-              updated: "2026-07-20",
+              icon: "BookOpen",
               readMinutes: 6,
-              posts: [
-                {
-                  slug: "cash-secured-puts",
-                  title: "Cash-Secured Puts",
-                  description: "Related.",
-                  rawDebug: rawPoison,
-                },
-              ],
+              completed: false,
               rawDebug: rawPoison,
             },
           ],
+          courseTotal: 1,
+          completedSlugs: [],
           rawDebug: rawPoison,
         }),
         getEducationArticle: async () => ({

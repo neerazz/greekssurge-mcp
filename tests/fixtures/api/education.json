@@ -1,21 +1,24 @@
 {
-  "pillars": [
+  "completedSlugs": ["stock-market-basics"],
+  "course": [
+    {
+      "slug": "stock-market-basics",
+      "title": "Stock Market Basics: Shares, Brokers, Bids and Why Price Moves",
+      "order": 1,
+      "clusterTitle": "Stock Market Basics",
+      "icon": "Landmark",
+      "readMinutes": 9,
+      "completed": true
+    },
     {
       "slug": "covered-calls-basics",
       "title": "Covered Calls Basics",
-      "description": "Sanitized education overview.",
-      "cluster": "options-income",
+      "order": 2,
       "clusterTitle": "Options Income",
-      "pillar": true,
-      "updated": "2026-07-20",
+      "icon": "BookOpen",
       "readMinutes": 6,
-      "posts": [
-        {
-          "slug": "covered-calls-basics",
-          "title": "Covered Calls Basics",
-          "description": "Sanitized post summary."
-        }
-      ]
+      "completed": false
     }
-  ]
+  ],
+  "courseTotal": 2
 }
