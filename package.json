@@ -51,7 +51,7 @@
     "start": "node dist/cli.js serve"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.29.0",
+    "@modelcontextprotocol/sdk": "1.30.0",
     "ws": "^8.18.3",
     "zod": "^4.1.13"
   },
