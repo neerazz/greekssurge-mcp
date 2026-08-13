@@ -69,7 +69,7 @@ describe("package metadata", () => {
     expect(pkg.scripts["audit:runtime"]).toBe(
       "npm audit --omit=dev --audit-level=high",
     );
-    expect(pkg.dependencies?.["@modelcontextprotocol/sdk"]).toBe("1.29.0");
+    expect(pkg.dependencies?.["@modelcontextprotocol/sdk"]).toBe("1.30.0");
     expect(pkg.dependencies?.zod).toMatch(/^\^4\./);
     expect(pkg.dependencies?.ws).toMatch(/^\^8\./);
     expect(pkg.devDependencies?.["@types/ws"]).toMatch(/^\^8\./);
