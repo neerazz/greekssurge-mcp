@@ -1,3 +1,4 @@
+import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { defaultTokenPath, loadConfig } from "../src/config.js";
 
@@ -12,11 +13,12 @@ describe("loadConfig", () => {
     expect(config.port).toBe(3333);
     expect(config.allowedHosts).toEqual(["127.0.0.1", "localhost"]);
     expect(config.tokenPath).toContain("greekssurge-mcp");
+    // The browser profile and cache live beside the token store on every OS.
     expect(config.chromiumProfileDir).toBe(
-      "/tmp/home/Library/Application Support/greekssurge-mcp/chromium-profile",
+      join(dirname(config.tokenPath), "chromium-profile"),
     );
     expect(config.browserCacheDir).toBe(
-      "/tmp/home/Library/Application Support/greekssurge-mcp/browser-cache",
+      join(dirname(config.tokenPath), "browser-cache"),
     );
   });
 

@@ -6,7 +6,7 @@ import {
   readFile as fsReadFile,
   unlink as fsUnlink,
 } from "node:fs/promises";
-import { delimiter, join, posix, win32 } from "node:path";
+import { join, posix, win32 } from "node:path";
 import {
   Browser,
   BrowserTag,
@@ -90,7 +90,7 @@ function pathCandidates(
 ): string[] {
   if (!pathValue) return [];
   const path = platform === "win32" ? win32 : posix;
-  const separator = platform === "win32" ? ";" : delimiter;
+  const separator = platform === "win32" ? ";" : ":";
   return pathValue
     .split(separator)
     .filter(Boolean)
