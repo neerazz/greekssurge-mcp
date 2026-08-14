@@ -277,7 +277,7 @@ local token store.
 
 ## Transport status
 
-Local stdio is the only shipped transport in v0.1.1.
+Local stdio is the only shipped transport in v0.1.2.
 
 Hosted Streamable HTTP/OAuth is not shipped because `csp.greekssurge.com` lacks the required OAuth discovery/backend contract for a compliant remote MCP endpoint. Do not configure a remote URL for this version; use local stdio.
 
@@ -288,8 +288,8 @@ The canonical package is published on npm as
 unavailable, use the matching GitHub release in the same command position:
 
 ```sh
-npx -y github:neerazz/greekssurge-mcp#v0.1.1 auth login
-npx -y github:neerazz/greekssurge-mcp#v0.1.1
+npx -y github:neerazz/greekssurge-mcp#v0.1.2 auth login
+npx -y github:neerazz/greekssurge-mcp#v0.1.2
 ```
 
 The canonical published command is `npx -y greekssurge-mcp`; the GitHub form is fallback-only.

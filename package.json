@@ -1,6 +1,6 @@
 {
   "name": "greekssurge-mcp",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Read-only Model Context Protocol server for GreeksSurge account data.",
   "type": "module",
   "license": "MIT",

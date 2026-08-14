@@ -30,8 +30,10 @@ try {
 
 async function createTarball() {
   const result = run("npm", ["pack", "--json"], { cwd: root });
-  const packs = JSON.parse(result.stdout);
-  const filename = packs[0]?.filename;
+  const parsed = JSON.parse(result.stdout);
+  // npm 10 returns an array; npm 11+ returns an object keyed by package name.
+  const pack = Array.isArray(parsed) ? parsed[0] : Object.values(parsed)[0];
+  const filename = pack?.filename;
   if (!filename) throw new Error("npm pack did not return a tarball filename.");
   return resolve(root, filename);
 }
@@ -170,7 +172,7 @@ async function installAndSmokeTest(tarball) {
     cwd: temp,
     env,
   }).stdout.trim();
-  if (version !== "0.1.1")
+  if (version !== "0.1.2")
     throw new Error(`Unexpected CLI version: ${version}`);
 
   const api = await fixtureApi();
