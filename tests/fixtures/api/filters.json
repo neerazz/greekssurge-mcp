@@ -1,10 +1,38 @@
 {
-  "expiries": ["2026-08-21"],
+  "expiries": ["2026-08-14", "2026-08-21", "2026-08-28", "2026-09-04"],
   "tickers": ["AAPL", "MSFT"],
-  "volatilities": [{ "label": "Low", "value": "LOW" }],
-  "rois": [{ "label": "0-1%", "value": "0-1" }],
-  "capitals": [{ "label": "$0-$5k", "value": "0-5000" }],
-  "probOtms": [{ "label": "60-70%", "value": "60-70" }],
-  "modes": [{ "label": "Cash-Secured Put", "value": "CSP" }],
-  "outcomes": [{ "label": "Open", "value": "OPEN" }]
+  "volatilities": [
+    { "label": "All", "value": "ALL" },
+    { "label": "<75%", "value": "0-75" },
+    { "label": "75-100%", "value": "75-100" },
+    { "label": "100%+", "value": "100+" }
+  ],
+  "rois": [
+    { "label": "All", "value": "ALL" },
+    { "label": "<2%", "value": "<2%" },
+    { "label": "2-4%", "value": "2-4%" },
+    { "label": "4%+", "value": "4%+" }
+  ],
+  "capitals": [
+    { "label": "All", "value": "ALL" },
+    { "label": "< $2k", "value": "< $2k" },
+    { "label": "$2-$5k", "value": "$2-$5k" },
+    { "label": "$5k+", "value": "$5k+" }
+  ],
+  "probOtms": [
+    { "label": "All", "value": "ALL" },
+    { "label": "< 80%", "value": "< 80%" },
+    { "label": "80-90%", "value": "80-90%" }
+  ],
+  "modes": [
+    { "label": "All", "value": "ALL" },
+    { "label": "Weekly", "value": "WEEKLY" },
+    { "label": "Monthly", "value": "MONTHLY" }
+  ],
+  "outcomes": [
+    { "label": "All", "value": "ALL" },
+    { "label": "Out Of Money", "value": "OTM" },
+    { "label": "Bought To Close", "value": "BTC" },
+    { "label": "Assigned", "value": "ASSIGNED" }
+  ]
 }

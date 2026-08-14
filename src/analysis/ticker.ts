@@ -50,6 +50,7 @@ export interface OpenIdeaAnalysis {
   bufferToStrikePct: number | null;
   bufferToBreakEvenPct: number | null;
   probOtmPct: number;
+  /** 100 - probOtm: an ITM/assignment-risk proxy, not assignment probability. */
   assignmentRiskPct: number;
   roiPct: number;
   annualizedRoiPct: number | null;
@@ -203,7 +204,7 @@ function summarizeHistory(
     };
   }
 
-  const assignmentRate = safeDivide((row.count - row.otm) * 100, row.count);
+  const assignmentRate = safeDivide(assignments.length * 100, settled.length);
   const avgPremium = safeDivide(row.premium, row.count);
   return {
     trades: row.count,
@@ -282,10 +283,10 @@ function buildIndicators(
     },
     {
       key: "assignment_risk",
-      label: "Median assignment risk",
+      label: "Median ITM / assignment-risk proxy",
       value: medianProbOtm === null ? null : round(100 - medianProbOtm),
       unit: "percent",
-      basis: "100 - probOtm",
+      basis: "100 - probOtm; proxy only, not probability of assignment",
     },
     {
       key: "roi",
@@ -303,7 +304,7 @@ function buildIndicators(
     },
     {
       key: "premium_per_risk_unit",
-      label: "Median premium per point of assignment risk",
+      label: "Median premium per point of ITM-risk proxy",
       value: medianPerRisk === null ? null : round(medianPerRisk, 3),
       unit: "ratio",
       basis:
@@ -318,10 +319,10 @@ function buildIndicators(
     },
     {
       key: "historical_assignment_rate",
-      label: "Historical assignment rate for this ticker",
+      label: "Observed assignment rate in sampled trade history",
       value: history.assignmentRatePct,
       unit: "percent",
-      basis: "(settled count - expired OTM count) / settled count * 100",
+      basis: "explicit ASSIGNED rows / sampled trade-history rows * 100",
     },
     {
       key: "net_premium_per_trade",
@@ -371,13 +372,14 @@ function buildDownsideFactors(
 
   if (
     history.assignmentRatePct !== null &&
+    history.sampledRows === history.trades &&
     portfolio.portfolioAssignmentRatePct !== null &&
     history.assignmentRatePct > portfolio.portfolioAssignmentRatePct
   ) {
     factors.push({
       key: "assignment_rate_above_portfolio",
       severity: "medium",
-      detail: `Assigned on ${history.assignmentRatePct}% of settled ${ticker} trades versus ${portfolio.portfolioAssignmentRatePct}% across the whole account.`,
+      detail: `Explicitly assigned on ${history.assignmentRatePct}% of the complete sampled ${ticker} history versus ${portfolio.portfolioAssignmentRatePct}% across the whole account.`,
     });
   }
 
@@ -478,7 +480,7 @@ function buildDownsideFactors(
     factors.push({
       key: "small_sample",
       severity: "info",
-      detail: `Only ${history.trades} settled ${ticker} trades. Win rate and assignment rate are not yet meaningful at that sample size.`,
+      detail: `Only ${history.trades} settled ${ticker} trades. Win rate and sampled assignment rate are not yet meaningful at that sample size.`,
     });
   }
 
@@ -507,6 +509,8 @@ export function analyzeTicker(input: AnalyzeTickerInput): TickerAnalysis {
     "Derived from GreeksSurge data only: current open ideas, the account's settled history, and published probability/ROI figures.",
     "No implied volatility, delta, earnings date, news, or price history is available per idea, so nothing here models why the stock might fall - only how much cushion exists and how this ticker has behaved before.",
     "Assignment loss magnitude is not published. Assigned rows carry roi 0 and premiumCollected stays positive, so depth is approximated from the closing option price over the strike.",
+    "Forward-looking assignmentRiskPct is 100 - probOtm, an ITM/assignment-risk proxy rather than a probability of assignment; positions may be closed before expiry.",
+    "Ticker assignment rate uses only explicit ASSIGNED outcomes in the returned trade-history sample and is omitted when no sampled rows exist.",
     "Performance stats and trade history keep separate windows and can report different counts for the same ticker; both are shown rather than reconciled.",
     "Measurements and named risk factors only. Not a recommendation and not financial advice.",
   ];

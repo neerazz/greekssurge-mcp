@@ -59,4 +59,4 @@ export {
 export type { UpstreamSchemaName } from "./api/schemas.js";
 export type * from "./api/types.js";
 export const packageName = "greekssurge-mcp";
-export const packageVersion = "0.2.0";
+export const packageVersion = "0.2.1";

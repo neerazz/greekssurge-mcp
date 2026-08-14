@@ -56,7 +56,7 @@ describe("GreeksSurge MCP prompt routing", () => {
   it("turns a cash-secured-put intent into a grounded candidate recommendation", () => {
     const text = renderPrompt("cash_secured_put_plan", {
       ticker: "ASTS",
-      capital: "5000-20000",
+      capital: "$5k+",
       expiry: "2026-08-21",
     });
 
@@ -76,6 +76,25 @@ describe("GreeksSurge MCP prompt routing", () => {
     expect(text).toMatch(/assignment/i);
     expect(text).toMatch(/do not rank by ROI alone/i);
     expect(text).toMatch(/never place|do not place/i);
+    expect(text).toMatch(/limit 100/i);
+    expect(text).toMatch(/pagination\.pages/i);
+    expect(text).toMatch(/every page/i);
+    expect(text).toMatch(/specific (?:idea )?contracts/i);
+    for (const field of ["id", "displaySymbol", "expiry", "strike"]) {
+      expect(text).toContain(field);
+    }
+    expect(text).toMatch(/join[\s\S]+by `?id`?/i);
+    expect(text).toContain("retrievedAt");
+    expect(text).toContain("cached");
+    expect(text).toMatch(/triggerPrice[^\n]+not[^\n]+current quote/i);
+  });
+
+  it("retains the requested limit when no screen filters are supplied", () => {
+    const text = renderPrompt("cash_secured_put_plan");
+
+    expect(text).toMatch(/pass no filter arguments/i);
+    expect(text).toMatch(/retain[^\n]+limit/i);
+    expect(text).not.toMatch(/call the tool with no arguments/i);
   });
 
   it("explains the wheel boundary without pretending to have covered-call or brokerage state", () => {
@@ -88,6 +107,37 @@ describe("GreeksSurge MCP prompt routing", () => {
     expect(text).toMatch(/covered-call chain|covered call chain/i);
     expect(text).toMatch(/brokerage position|share ownership/i);
     expect(text).toMatch(/cannot verify|not available/i);
+    expect(text).toMatch(/ITM\/assignment-risk proxy/i);
+    expect(text).toMatch(/not assignment probability/i);
+  });
+
+  it("does not invent tier entitlements in the account overview", () => {
+    const text = renderPrompt("account_overview");
+
+    expect(text).toMatch(/report[^\n]+tier[^\n]+features[^\n]+verbatim/i);
+    expect(text).toMatch(
+      /tool is verified accessible only[\s\S]+tool call succeeds/i,
+    );
+    expect(text).not.toMatch(/which tools my tier can actually use/i);
+  });
+
+  it("validates assignment outcomes against the live filter contract", () => {
+    const text = renderPrompt("assignment_review", { outcome: "ASSIGNED" });
+
+    expect(text).toContain("get_available_filters");
+    for (const outcome of ["ALL", "OTM", "BTC", "ASSIGNED"]) {
+      expect(text).toContain(outcome);
+    }
+    expect(text).not.toMatch(/e\.g\. ASSIGNED, WIN/i);
+  });
+
+  it("does not reintroduce ROI-only ranking for an empty watchlist", () => {
+    const text = renderPrompt("watchlist_digest");
+
+    expect(text).not.toMatch(/highest-ROI/i);
+    expect(text).toMatch(/probOtm/i);
+    expect(text).toMatch(/buffer/i);
+    expect(text).toMatch(/ROI as\s+the\s+reward/i);
   });
 
   it("gives first-time users a capability map and concrete starter requests", () => {

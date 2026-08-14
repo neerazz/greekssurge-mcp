@@ -167,7 +167,7 @@ describe("downside factors", () => {
     // A plain negative ticker should not double-report.
     expect(factorKeys(analysis)).not.toContain("negative_net_premium");
     expect(indicator(analysis, "net_premium_per_trade")?.value).toBe(-21.94);
-    expect(indicator(analysis, "historical_assignment_rate")?.value).toBe(25);
+    expect(indicator(analysis, "historical_assignment_rate")?.value).toBeNull();
   });
 
   it("flags that assigned rows carry roi 0 and understate the loss", () => {
@@ -198,6 +198,29 @@ describe("downside factors", () => {
     expect(analysis.history.deepestAssignmentDepthPct).toBe(12.77);
     expect(analysis.history.sampledAssignments).toBe(1);
     expect(factorKeys(analysis)).toContain("assignment_depth");
+  });
+
+  it("does not count bought-to-close outcomes as historical assignments", () => {
+    const outcomes = ["OTM", "OTM", "OTM", "OTM", "OTM", "OTM", "BTC", "BTC"];
+    const analysis = analyzeTicker({
+      ticker: "ASTS",
+      ideas: [idea()],
+      stats: stats({
+        ticker_breakdown: [
+          { ticker: "ASTS", count: 8, otm: 6, premium: 400, winRate: 100 },
+        ],
+      }),
+      settled: outcomes.map((outcome, index) =>
+        settled({ id: `settled_${index}`, outcome }),
+      ),
+    });
+
+    expect(analysis.history.sampledAssignments).toBe(0);
+    expect(analysis.history.assignmentRatePct).toBe(0);
+    expect(indicator(analysis, "historical_assignment_rate")?.value).toBe(0);
+    expect(factorKeys(analysis)).not.toContain(
+      "assignment_rate_above_portfolio",
+    );
   });
 
   it("reports when performance stats and trade history disagree on count", () => {

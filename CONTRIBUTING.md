@@ -4,7 +4,7 @@ Thanks for improving GreeksSurge MCP.
 
 ## Scope
 
-Version 0.2.0 is a read-only local stdio MCP server. Keep changes inside that boundary unless a future issue explicitly designs and ships a compliant hosted transport.
+Version 0.2.1 is a read-only local stdio MCP server. Keep changes inside that boundary unless a future issue explicitly designs and ships a compliant hosted transport.
 
 Do not add trading, order-entry, admin, billing, checkout, payment, or account-mutation tools.
 

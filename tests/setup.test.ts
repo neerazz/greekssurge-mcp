@@ -57,7 +57,7 @@ describe("local stdio setup config generator", () => {
   });
 
   it("generates parseable token-free JSON for JSON-configured clients", () => {
-    const packageSpec = "@neerazz/greekssurge-mcp@0.2.0";
+    const packageSpec = "@neerazz/greekssurge-mcp@0.2.1";
     const guide = generateSetupGuide({ client: "all", packageSpec });
 
     for (const client of ["claude-desktop", "cursor"] as const) {

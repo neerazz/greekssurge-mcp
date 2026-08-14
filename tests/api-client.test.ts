@@ -68,7 +68,7 @@ describe("GreeksSurgeClient", () => {
     const account = await client.getAccount();
 
     expect(authHeader).toBe("Bearer site-token");
-    expect(userAgent).toMatch(/^greekssurge-mcp\/0\.2\.0/);
+    expect(userAgent).toMatch(/^greekssurge-mcp\/0\.2\.1/);
     expect(account.userTier).toBe("premium");
     expect(JSON.stringify(account)).not.toContain(
       "fixture-token-must-not-be-exposed",
@@ -237,6 +237,44 @@ describe("GreeksSurgeClient", () => {
     await expect(
       client.listTradeIdeas({ mode: "COVERED_CALL" }),
     ).rejects.toMatchObject({ code: "INVALID_QUERY" });
+  });
+
+  it("round-trips every filter value advertised by get_available_filters", async () => {
+    const urls: string[] = [];
+    const server = await withServer(async (req, res) => {
+      urls.push(req.url ?? "");
+      if (req.url === "/api/filters") {
+        json(res, 200, await fixture("filters"));
+        return;
+      }
+      json(res, 200, await fixture("ideas"));
+    });
+    cleanups.push(server.close);
+    const client = new GreeksSurgeClient({
+      baseUrl: server.baseUrl,
+      minIntervalMs: 0,
+      publicCacheTtlMs: 0,
+    });
+
+    const filters = await client.getAvailableFilters();
+    const groups = [
+      ["mode", filters.modes],
+      ["iv", filters.volatilities],
+      ["roi", filters.rois],
+      ["capital", filters.capitals],
+      ["pop", filters.probOtms],
+    ] as const;
+
+    for (const [key, options] of groups) {
+      for (const option of options) {
+        await expect(
+          client.listTradeIdeas({ [key]: option.value }),
+        ).resolves.toBeTruthy();
+      }
+    }
+    expect(urls.filter((url) => url.startsWith("/api/ideas?"))).toHaveLength(
+      groups.reduce((count, [, options]) => count + options.length, 0),
+    );
   });
 
   it("uses production trade-history query parameters separately from ideas", async () => {

@@ -24,7 +24,7 @@ GreeksSurge data instead of guesses.
 
 A local [Model Context Protocol](https://modelcontextprotocol.io) server that gives an
 AI client **11 read-only tools** and **11 ready-made prompts** over your GreeksSurge data,
-authenticated with the session you already have in your browser.
+authenticated with the signed-in session you keep in BrowserOS.
 
 | It can                                       | It cannot                          |
 | -------------------------------------------- | ---------------------------------- |
@@ -40,10 +40,16 @@ Repository: https://github.com/neerazz/greekssurge-mcp
 
 ## Quick start
 
-**Requirements:** Node.js 20+ · BrowserOS with a signed-in `https://csp.greekssurge.com` tab
+**Requirements:** Node.js 20+ · [BrowserOS](https://browseros.com) with a signed-in
+`https://csp.greekssurge.com` tab
+
+[Install BrowserOS](https://docs.browseros.com/neo/install) on macOS, Windows, or Linux,
+start it, open `https://csp.greekssurge.com`, and sign in normally. Keep that tab open so
+the CLI can import the site-issued token from the exact origin without reading your
+Google password.
 
 ```sh
-# 1. Reuse the GreeksSurge login you already have in BrowserOS
+# 1. Reuse the signed-in GreeksSurge session in BrowserOS
 npx -y greekssurge-mcp auth login
 
 # 2. Confirm the token was stored
@@ -59,6 +65,10 @@ Step 1 reads only the `gs_token` value from a tab whose origin is exactly
 `https://csp.greekssurge.com`, validates it against `/api/auth/me`, and saves it to a
 private local file. It never asks for your Google password and never makes you paste a
 token anywhere.
+
+`auth login` is also the BrowserOS connectivity diagnostic. If BrowserOS is not running,
+the site tab is absent, or the exact-origin session is signed out, it exits nonzero with
+the corrective action instead of storing a credential.
 
 ## Ask in plain English
 
@@ -229,9 +239,10 @@ The math runs in the server rather than in the model, so twenty rows of division
 same answer every time. Every indicator ships a `basis` field carrying its formula, so
 you can check a measurement instead of trusting it.
 
-**Indicators** — cushion to break-even, probability OTM, assignment risk, ROI,
-annualized ROI, premium per point of assignment risk, capital blocked, historical
-assignment rate, net premium per settled trade, settled trade count.
+**Indicators** — cushion to break-even, probability OTM, the `100 - probOtm`
+ITM/assignment-risk proxy (not assignment probability), ROI, annualized ROI, premium per
+point of that risk proxy, capital blocked, observed assignment rate from explicit
+`ASSIGNED` rows in sampled history, net premium per settled trade, settled trade count.
 
 **Downside factors**, each named with a severity and its evidence:
 
@@ -269,8 +280,8 @@ the right tools in the right order and forbids inventing numbers.
 | Prompt                      | Arguments                                      | Does                                                                                                  |
 | --------------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `getting_started`           | —                                              | Explains the product boundary, capability map, prompt map, and useful first requests                  |
-| `account_overview`          | —                                              | Confirms the connection and what the connected tier can reach                                         |
-| `cash_secured_put_plan`     | `ticker` `expiry` `roi` `pop` `capital` `mode` | Screens live ideas, analyzes up to three tickers, and recommends one candidate with explicit caveats  |
+| `account_overview`          | —                                              | Reports tier/features/masking verbatim and verifies only the tools it actually calls                  |
+| `cash_secured_put_plan`     | `ticker` `expiry` `roi` `pop` `capital` `mode` | Paginates live ideas, analyzes exact contracts, and recommends one candidate with explicit caveats    |
 | `screen_ideas`              | `ticker` `expiry` `roi` `pop` `capital` `mode` | Validates real filter buckets and presents a multi-signal screen without ranking by ROI alone         |
 | `ticker_downside_review`    | `ticker`                                       | Shows what is measured, what could breach break-even, and what the data cannot establish              |
 | `wheel_strategy_review`     | `ticker`                                       | Reviews the CSP first stage and names missing covered-call, brokerage-position, and buying-power data |
@@ -284,8 +295,8 @@ All arguments are optional.
 
 ```
 /getting_started
-/cash_secured_put_plan capital=5000-20000
-/screen_ideas ticker=ASTS roi=2-3
+/cash_secured_put_plan capital="$5k+"
+/screen_ideas ticker=ASTS roi="2-4%"
 /ticker_downside_review ticker=ASTS
 /wheel_strategy_review ticker=ASTS
 /assignment_review outcome=ASSIGNED
@@ -310,7 +321,7 @@ local token store.
 
 ## Transport status
 
-Local stdio is the only shipped transport in v0.2.0.
+Local stdio is the only shipped transport in v0.2.1.
 
 Hosted Streamable HTTP/OAuth is not shipped because `csp.greekssurge.com` lacks the required OAuth discovery/backend contract for a compliant remote MCP endpoint. Do not configure a remote URL for this version; use local stdio.
 
@@ -321,8 +332,8 @@ The canonical package is published on npm as
 unavailable, use the matching GitHub release in the same command position:
 
 ```sh
-npx -y github:neerazz/greekssurge-mcp#v0.2.0 auth login
-npx -y github:neerazz/greekssurge-mcp#v0.2.0
+npx -y github:neerazz/greekssurge-mcp#v0.2.1 auth login
+npx -y github:neerazz/greekssurge-mcp#v0.2.1
 ```
 
 The canonical published command is `npx -y greekssurge-mcp`; the GitHub form is fallback-only.

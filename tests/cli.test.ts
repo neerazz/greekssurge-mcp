@@ -34,7 +34,7 @@ describe("CLI lifecycle", () => {
     });
     expect(await capture(["--version"])).toMatchObject({
       code: 0,
-      stdout: expect.stringContaining("0.2.0"),
+      stdout: expect.stringContaining("0.2.1"),
     });
   });
 

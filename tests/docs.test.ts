@@ -61,8 +61,13 @@ describe("public release documentation", () => {
     expect(readme).toContain("Node.js 20+");
     expect(readme).toContain("npx -y greekssurge-mcp auth login");
     expect(readme).toContain("npx -y greekssurge-mcp");
+    expect(readme).toContain("https://browseros.com");
+    expect(readme).toContain("https://docs.browseros.com/neo/install");
+    expect(readme).toMatch(/macOS, Windows, or Linux/i);
+    expect(readme).toMatch(/signed-in session[^\n]+BrowserOS/i);
+    expect(readme).toMatch(/auth login[^\n]+diagnostic/i);
     expect(readme).toMatch(/verify[^\n]+get_account/i);
-    expect(readme).toContain("github:neerazz/greekssurge-mcp#v0.2.0");
+    expect(readme).toContain("github:neerazz/greekssurge-mcp#v0.2.1");
     expect(readme).toMatch(/published on npm/i);
     expect(readme).toMatch(/fallback-only/i);
     expect(readme).toContain("https://github.com/neerazz/greekssurge-mcp");
@@ -133,15 +138,17 @@ describe("public release documentation", () => {
       expect(readme).toContain(trigger);
     }
     expect(readme).toContain("/cash_secured_put_plan");
+    expect(readme).toContain('capital="$5k+"');
+    expect(readme).not.toContain("capital=5000-20000");
     expect(readme).toMatch(/recommend one candidate/i);
     expect(readme).toMatch(/never\s+places?\s+or\s+submits?\s+an?\s+order/i);
   });
 
-  it("discloses v0.2.0 local-only transport and the real remote blocker", async () => {
+  it("discloses v0.2.1 local-only transport and the real remote blocker", async () => {
     const readme = await read(docs.readme);
 
     expect(readme).toMatch(
-      /local stdio is the only shipped transport in v0\.2\.0/i,
+      /local stdio is the only shipped transport in v0\.2\.1/i,
     );
     expect(readme).toMatch(/Streamable HTTP\/OAuth[^\n]+not shipped/i);
     expect(readme).toMatch(
@@ -200,7 +207,7 @@ describe("public release documentation", () => {
     expect(codeOfConduct).toContain("Contributor Covenant");
 
     // Troubleshooting used to live in docs/troubleshooting.md; it must survive in the README.
-    expect(readme).toContain("github:neerazz/greekssurge-mcp#v0.2.0");
+    expect(readme).toContain("github:neerazz/greekssurge-mcp#v0.2.1");
     expect(readme).toMatch(/canonical published command/i);
     expect(readme).toMatch(/auth logout/);
     expect(readme).toMatch(/premiumMasked/);
