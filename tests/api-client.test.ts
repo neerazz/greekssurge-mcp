@@ -68,7 +68,7 @@ describe("GreeksSurgeClient", () => {
     const account = await client.getAccount();
 
     expect(authHeader).toBe("Bearer site-token");
-    expect(userAgent).toMatch(/^greekssurge-mcp\/0\.1\.3/);
+    expect(userAgent).toMatch(/^greekssurge-mcp\/0\.2\.0/);
     expect(account.userTier).toBe("premium");
     expect(JSON.stringify(account)).not.toContain(
       "fixture-token-must-not-be-exposed",
@@ -323,16 +323,25 @@ describe("GreeksSurgeClient", () => {
     cleanups.push(server.close);
     const options = {
       baseUrl: server.baseUrl,
-      minIntervalMs: 30,
+      minIntervalMs: 50,
       publicCacheTtlMs: 0,
     };
 
+    const slowTokenClient = new GreeksSurgeClient({
+      ...options,
+      tokenProvider: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 30));
+        return undefined;
+      },
+    });
+    const fastTokenClient = new GreeksSurgeClient(options);
+
     await Promise.all([
-      new GreeksSurgeClient(options).getMarketStatus(),
-      new GreeksSurgeClient(options).getMarketStatus(),
+      slowTokenClient.getMarketStatus(),
+      fastTokenClient.getMarketStatus(),
     ]);
 
     expect(requestTimes).toHaveLength(2);
-    expect(requestTimes[1]! - requestTimes[0]!).toBeGreaterThanOrEqual(20);
+    expect(requestTimes[1]! - requestTimes[0]!).toBeGreaterThanOrEqual(40);
   });
 });

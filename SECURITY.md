@@ -2,7 +2,7 @@
 
 ## Supported version
 
-Version 0.1.3 ships only a local stdio MCP server. Local stdio is the only shipped transport in v0.1.3.
+Version 0.2.0 ships only a local stdio MCP server. Local stdio is the only shipped transport in v0.2.0.
 
 Hosted Streamable HTTP/OAuth is not shipped because `csp.greekssurge.com` lacks the required OAuth discovery/backend contract for a compliant remote MCP endpoint.
 

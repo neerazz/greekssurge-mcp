@@ -28,6 +28,10 @@ const clientSetups = [
 
 const promptNames = [
   "account_overview",
+  "getting_started",
+  "cash_secured_put_plan",
+  "ticker_downside_review",
+  "wheel_strategy_review",
   "screen_ideas",
   "performance_retrospective",
   "assignment_review",
@@ -58,7 +62,7 @@ describe("public release documentation", () => {
     expect(readme).toContain("npx -y greekssurge-mcp auth login");
     expect(readme).toContain("npx -y greekssurge-mcp");
     expect(readme).toMatch(/verify[^\n]+get_account/i);
-    expect(readme).toContain("github:neerazz/greekssurge-mcp#v0.1.3");
+    expect(readme).toContain("github:neerazz/greekssurge-mcp#v0.2.0");
     expect(readme).toMatch(/published on npm/i);
     expect(readme).toMatch(/fallback-only/i);
     expect(readme).toContain("https://github.com/neerazz/greekssurge-mcp");
@@ -111,13 +115,33 @@ describe("public release documentation", () => {
     for (const prompt of promptNames) expect(readme).toContain(`\`${prompt}\``);
     expect(readme).toMatch(/##\s+Prompts/);
     expect(readme).toMatch(/##\s+Troubleshooting/);
+    expect(readme).toMatch(/11 read-only tools[^\n]+11 ready-made prompts/i);
   });
 
-  it("discloses v0.1.3 local-only transport and the real remote blocker", async () => {
+  it("teaches agents and humans when to invoke the CSP workflow", async () => {
+    const readme = await read(docs.readme);
+
+    for (const trigger of [
+      "cash-secured put",
+      "cash secured put",
+      "cash secure put",
+      "CSP",
+      "sell a put",
+      "wheel strategy",
+      "assignment risk",
+    ]) {
+      expect(readme).toContain(trigger);
+    }
+    expect(readme).toContain("/cash_secured_put_plan");
+    expect(readme).toMatch(/recommend one candidate/i);
+    expect(readme).toMatch(/never\s+places?\s+or\s+submits?\s+an?\s+order/i);
+  });
+
+  it("discloses v0.2.0 local-only transport and the real remote blocker", async () => {
     const readme = await read(docs.readme);
 
     expect(readme).toMatch(
-      /local stdio is the only shipped transport in v0\.1\.3/i,
+      /local stdio is the only shipped transport in v0\.2\.0/i,
     );
     expect(readme).toMatch(/Streamable HTTP\/OAuth[^\n]+not shipped/i);
     expect(readme).toMatch(
@@ -176,7 +200,7 @@ describe("public release documentation", () => {
     expect(codeOfConduct).toContain("Contributor Covenant");
 
     // Troubleshooting used to live in docs/troubleshooting.md; it must survive in the README.
-    expect(readme).toContain("github:neerazz/greekssurge-mcp#v0.1.3");
+    expect(readme).toContain("github:neerazz/greekssurge-mcp#v0.2.0");
     expect(readme).toMatch(/canonical published command/i);
     expect(readme).toMatch(/auth logout/);
     expect(readme).toMatch(/premiumMasked/);

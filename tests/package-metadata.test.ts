@@ -9,6 +9,7 @@ describe("package metadata", () => {
     const pkg = await readJson("package.json");
 
     expect(pkg.name).toBe("greekssurge-mcp");
+    expect(pkg.version).toBe("0.2.0");
     expect(pkg.description).toMatch(/read-only Model Context Protocol server/i);
     expect(pkg.type).toBe("module");
     expect(pkg.engines?.node).toBe(">=20");
@@ -30,11 +31,32 @@ describe("package metadata", () => {
         "model-context-protocol",
         "greekssurge",
         "options",
+        "cash-secured-put",
+        "csp",
+        "wheel-strategy",
         "stdio",
         "read-only",
       ]),
     );
     expect(pkg.files).toEqual(["dist", "README.md", "LICENSE", "SECURITY.md"]);
+  });
+
+  it("keeps every public version surface aligned", async () => {
+    const expected = "0.2.0";
+    const pkg = await readJson("package.json");
+    const lock = await readJson("package-lock.json");
+    const cli = await readFile("src/cli.ts", "utf8");
+    const index = await readFile("src/index.ts", "utf8");
+    const server = await readFile("src/mcp/create-server.ts", "utf8");
+    const verifier = await readFile("scripts/verify-package.mjs", "utf8");
+
+    expect(pkg.version).toBe(expected);
+    expect(lock.version).toBe(expected);
+    expect(lock.packages[""].version).toBe(expected);
+    for (const source of [cli, index, server, verifier]) {
+      expect(source).toContain(expected);
+      expect(source).not.toContain("0.1.3");
+    }
   });
 
   it("has the expected development scripts and dependency pins", async () => {

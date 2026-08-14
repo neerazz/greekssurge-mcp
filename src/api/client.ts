@@ -27,7 +27,7 @@ interface CacheEntry {
 }
 
 const USER_AGENT =
-  "greekssurge-mcp/0.1.3 (+https://github.com/neerazz/greekssurge-mcp)";
+  "greekssurge-mcp/0.2.0 (+https://github.com/neerazz/greekssurge-mcp)";
 const ALLOWED_STATIC_PATHS = new Set([
   "/api/status",
   "/api/auth/me",
@@ -165,10 +165,6 @@ export class GreeksSurgeClient {
     if (cached && cached.expiresAt > now)
       return cached.value as ParsedUpstream<TName>;
 
-    await this.throttle();
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
     const token = await this.tokenProvider();
     const headers = new Headers({
       Accept: "application/json",
@@ -176,6 +172,13 @@ export class GreeksSurgeClient {
     });
     if (token) headers.set("Authorization", `Bearer ${token}`);
     if (cached?.etag) headers.set("If-None-Match", cached.etag);
+
+    // Reserve the shared origin slot immediately before dispatch. Doing this
+    // before token lookup lets a slow provider consume the spacing window and
+    // allows two HTTP requests to arrive too close together.
+    await this.throttle();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 
     let response: Response;
     try {

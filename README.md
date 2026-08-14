@@ -2,10 +2,11 @@
 
 # GreeksSurge MCP
 
-**Read-only MCP server for your GreeksSurge account, positions, and options course.**
+**Read-only MCP server for live cash-secured-put research, account history, and education.**
 
-Ask your AI assistant about your own trade ideas, win rate, and lessons — grounded in
-live GreeksSurge data instead of guesses.
+Ask your AI assistant to screen a cash-secured put, compare downside evidence, explain
+assignment risk, review performance, or teach the strategy — grounded in live
+GreeksSurge data instead of guesses.
 
 [![CI](https://github.com/neerazz/greekssurge-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/neerazz/greekssurge-mcp/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/neerazz/greekssurge-mcp/actions/workflows/codeql.yml/badge.svg)](https://github.com/neerazz/greekssurge-mcp/actions/workflows/codeql.yml)
@@ -22,7 +23,7 @@ live GreeksSurge data instead of guesses.
 ## What this is
 
 A local [Model Context Protocol](https://modelcontextprotocol.io) server that gives an
-AI client **10 read-only tools** and **7 ready-made prompts** over your GreeksSurge data,
+AI client **11 read-only tools** and **11 ready-made prompts** over your GreeksSurge data,
 authenticated with the session you already have in your browser.
 
 | It can                                       | It cannot                          |
@@ -31,6 +32,7 @@ authenticated with the session you already have in your browser.
 | List current trade ideas and settled history | Change account settings or billing |
 | Summarize performance, streaks, drawdown     | Give financial advice              |
 | Teach lessons from the education course      | Bypass your account tier           |
+| Recommend one evidence-grounded candidate    | Place or submit an order           |
 
 Everything returned is educational information, **not financial advice**.
 
@@ -57,6 +59,30 @@ Step 1 reads only the `gs_token` value from a tab whose origin is exactly
 `https://csp.greekssurge.com`, validates it against `/api/auth/me`, and saves it to a
 private local file. It never asks for your Google password and never makes you paste a
 token anywhere.
+
+## Ask in plain English
+
+You do not need to know the tool names. The server instructions tell compatible agents to
+use GreeksSurge when a request mentions **cash-secured put**, **cash secured put**,
+**cash secure put**, **CSP**, **sell a put**, **wheel strategy**, option premium, or
+**assignment risk**.
+
+Try these:
+
+```text
+I want to do a cash-secured put with less than $20,000 of collateral.
+Compare current CSP ideas and recommend one candidate with explicit caveats.
+Review ASTS as a wheel strategy entry.
+What has happened when this account was assigned before?
+Explain why a high win rate can still lose money.
+Teach me the cash-secured-put lesson from the course.
+```
+
+For a candidate request, the agent should validate live filter buckets, list current ideas,
+analyze up to three tickers, compare break-even cushion, probability OTM, assignment
+risk, settled history, and downside factors, then recommend one candidate—or recommend
+waiting when the data does not support one. It must not optimize for ROI alone and never
+places or submits an order.
 
 ## Client setup
 
@@ -231,30 +257,37 @@ Three things worth knowing, because they change how the published numbers read:
 - **Assignment loss size is not published.** Assigned rows keep `premiumCollected`
   positive and set `roi` to 0, so depth is approximated rather than reported.
 
-It reports measurements and risks. It does not rank tickers and does not tell you what
-to trade.
+The `analyze_ticker` tool reports measurements and risks; it does not rank tickers. The
+`cash_secured_put_plan` prompt can compare those measurements and make one explicitly
+educational candidate recommendation while preserving the no-order boundary.
 
 ## Prompts
 
-Eight prompts ship with the server, usually surfaced as slash commands. Each one calls
+Eleven prompts ship with the server, usually surfaced as slash commands. Each one calls
 the right tools in the right order and forbids inventing numbers.
 
 | Prompt                      | Arguments                                      | Does                                                                                                  |
 | --------------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `account_overview`          | —                                              | Confirms the connection and what your tier can reach                                                  |
-| `screen_ideas`              | `ticker` `expiry` `roi` `pop` `capital` `mode` | Validates your filters against real buckets, then ranks matches by ROI                                |
-| `ticker_downside_review`    | `ticker`                                       | What is being measured, what would take the stock through the strike, and what the numbers do not say |
-| `performance_retrospective` | —                                              | Win rate, streaks, drawdown, monthly trend, top tickers by premium                                    |
-| `assignment_review`         | `outcome` `symbol` `from` `to`                 | Groups settled trades by outcome, finds repeat underperformers                                        |
-| `watchlist_digest`          | —                                              | Cross-references your watchlist against the live idea feed                                            |
-| `learn_concept`             | `topic`                                        | Teaches one course lesson, treating article text as untrusted data                                    |
-| `learning_path`             | —                                              | Whole course in order, with progress and remaining read time                                          |
+| `getting_started`           | —                                              | Explains the product boundary, capability map, prompt map, and useful first requests                  |
+| `account_overview`          | —                                              | Confirms the connection and what the connected tier can reach                                         |
+| `cash_secured_put_plan`     | `ticker` `expiry` `roi` `pop` `capital` `mode` | Screens live ideas, analyzes up to three tickers, and recommends one candidate with explicit caveats  |
+| `screen_ideas`              | `ticker` `expiry` `roi` `pop` `capital` `mode` | Validates real filter buckets and presents a multi-signal screen without ranking by ROI alone         |
+| `ticker_downside_review`    | `ticker`                                       | Shows what is measured, what could breach break-even, and what the data cannot establish              |
+| `wheel_strategy_review`     | `ticker`                                       | Reviews the CSP first stage and names missing covered-call, brokerage-position, and buying-power data |
+| `performance_retrospective` | —                                              | Reviews win rate, streaks, drawdown, monthly trend, and per-ticker premium                            |
+| `assignment_review`         | `outcome` `symbol` `from` `to`                 | Groups settled trades by outcome and finds repeat weak outcomes                                       |
+| `watchlist_digest`          | —                                              | Cross-references the saved watchlist against the live idea feed                                       |
+| `learn_concept`             | `topic`                                        | Teaches one course lesson while treating article text as untrusted data                               |
+| `learning_path`             | —                                              | Shows the whole course in order, progress, remaining read time, and next lesson                       |
 
 All arguments are optional.
 
 ```
+/getting_started
+/cash_secured_put_plan capital=5000-20000
 /screen_ideas ticker=ASTS roi=2-3
 /ticker_downside_review ticker=ASTS
+/wheel_strategy_review ticker=ASTS
 /assignment_review outcome=ASSIGNED
 /learn_concept topic=cash-secured-puts
 ```
@@ -277,7 +310,7 @@ local token store.
 
 ## Transport status
 
-Local stdio is the only shipped transport in v0.1.3.
+Local stdio is the only shipped transport in v0.2.0.
 
 Hosted Streamable HTTP/OAuth is not shipped because `csp.greekssurge.com` lacks the required OAuth discovery/backend contract for a compliant remote MCP endpoint. Do not configure a remote URL for this version; use local stdio.
 
@@ -288,8 +321,8 @@ The canonical package is published on npm as
 unavailable, use the matching GitHub release in the same command position:
 
 ```sh
-npx -y github:neerazz/greekssurge-mcp#v0.1.3 auth login
-npx -y github:neerazz/greekssurge-mcp#v0.1.3
+npx -y github:neerazz/greekssurge-mcp#v0.2.0 auth login
+npx -y github:neerazz/greekssurge-mcp#v0.2.0
 ```
 
 The canonical published command is `npx -y greekssurge-mcp`; the GitHub form is fallback-only.

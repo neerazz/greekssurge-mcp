@@ -150,7 +150,7 @@ describe("security invariants", () => {
       },
     });
 
-    expect(registered).toHaveLength(8);
+    expect(registered).toHaveLength(11);
     for (const prompt of registered) {
       expect(prompt.config.title).toBeTruthy();
       expect(prompt.config.description).toBeTruthy();

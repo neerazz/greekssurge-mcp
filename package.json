@@ -1,7 +1,7 @@
 {
   "name": "greekssurge-mcp",
-  "version": "0.1.3",
-  "description": "Read-only Model Context Protocol server for GreeksSurge account data.",
+  "version": "0.2.0",
+  "description": "Read-only Model Context Protocol server for live GreeksSurge cash-secured-put research, performance, education, and decision-support prompts.",
   "type": "module",
   "license": "MIT",
   "homepage": "https://github.com/neerazz/greekssurge-mcp#readme",
@@ -17,6 +17,9 @@
     "model-context-protocol",
     "greekssurge",
     "options",
+    "cash-secured-put",
+    "csp",
+    "wheel-strategy",
     "stdio",
     "read-only"
   ],

@@ -199,6 +199,51 @@ describe("GreeksSurge MCP tools", () => {
     await server.close();
   });
 
+  it("exposes every workflow prompt through the MCP protocol", async () => {
+    const { client, server } = await connectedClient({ token: "token" });
+
+    const prompts = await client.listPrompts();
+    expect(prompts.prompts.map((prompt) => prompt.name).sort()).toEqual(
+      [
+        "account_overview",
+        "assignment_review",
+        "cash_secured_put_plan",
+        "getting_started",
+        "learn_concept",
+        "learning_path",
+        "performance_retrospective",
+        "screen_ideas",
+        "ticker_downside_review",
+        "watchlist_digest",
+        "wheel_strategy_review",
+      ].sort(),
+    );
+
+    const plan = await client.getPrompt({
+      name: "cash_secured_put_plan",
+      arguments: { ticker: "ASTS", capital: "5000-20000" },
+    });
+    expect(JSON.stringify(plan.messages)).toMatch(/recommend one candidate/i);
+    expect(JSON.stringify(plan.messages)).toContain("analyze_ticker");
+    expect(JSON.stringify(plan.messages)).toMatch(/never place/i);
+
+    for (const name of [
+      "cash_secured_put_plan",
+      "screen_ideas",
+      "ticker_downside_review",
+      "wheel_strategy_review",
+      "assignment_review",
+      "learn_concept",
+    ]) {
+      await expect(
+        client.getPrompt({ name, arguments: {} }),
+      ).resolves.toMatchObject({ messages: [{ role: "user" }] });
+    }
+
+    await client.close();
+    await server.close();
+  });
+
   it("returns safe structured content with source, disclaimer, and provenance", async () => {
     const { client, server } = await connectedClient({ token: "token" });
 

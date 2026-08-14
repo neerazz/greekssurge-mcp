@@ -115,8 +115,10 @@ export function registerGreeksSurgePrompts(
             ["mode", args.mode],
           ]),
           "",
-          "Present the results as a table sorted by ROI descending, with columns:",
+          "Present the results as a table with columns:",
           "ticker, displaySymbol, expiry, strike, roi, probOtm, alertPremium, capital, buffer.",
+          "Do not rank by ROI alone. Order by probOtm descending, then buffer descending,",
+          "and treat ROI as the reward side of the trade-off rather than the decision rule.",
           "Below the table note how many ideas matched, the ROI range, and the probOtm range.",
           "If isFree is false on every row and my tier cannot see them, say that plainly.",
           "",
@@ -339,6 +341,146 @@ export function registerGreeksSurgePrompts(
           "",
           "If completedSlugs is empty, treat that as no recorded progress rather than as",
           "an error, and say the course has not been started.",
+          "",
+          GUARDRAIL,
+        ].join("\n"),
+      ),
+  );
+
+  options.register(
+    "cash_secured_put_plan",
+    {
+      title: "Plan a cash-secured put",
+      description:
+        "Screen live GreeksSurge ideas, compare downside evidence, and recommend one educational candidate with explicit caveats. Never places a trade.",
+      argsSchema: {
+        ticker: optionalArg("Optional ticker to include in the candidate set."),
+        expiry: optionalArg(
+          "Optional expiry bucket from get_available_filters.",
+        ),
+        roi: optionalArg("Optional ROI bucket from get_available_filters."),
+        pop: optionalArg(
+          "Optional probability-OTM bucket from get_available_filters.",
+        ),
+        capital: optionalArg(
+          "Optional capital bucket from get_available_filters.",
+        ),
+        mode: optionalArg("Optional idea mode from get_available_filters."),
+      },
+    },
+    (args) =>
+      userMessage(
+        [
+          "Help me plan a cash-secured put using live GreeksSurge evidence.",
+          "",
+          "Call these tools in order:",
+          "1. get_account — confirm access and stop if premiumMasked prevents a defensible comparison.",
+          "2. get_market_status — time-anchor the screen; do not treat it as a quote.",
+          "3. get_available_filters — validate every supplied bucket. Stop on an invalid bucket rather than substituting one.",
+          "4. list_trade_ideas with limit 25 and exactly the validated filters below.",
+          "5. Select up to three viable tickers from the returned rows and call analyze_ticker for each.",
+          "   If a ticker was supplied, include it when it appears in the returned candidate set.",
+          "",
+          filterLines([
+            ["ticker", args.ticker],
+            ["expiry", args.expiry],
+            ["roi", args.roi],
+            ["pop", args.pop],
+            ["capital", args.capital],
+            ["mode", args.mode],
+          ]),
+          "",
+          "Do not rank by ROI alone. Compare the candidates using returned evidence:",
+          "probOtm, break-even and buffer to break-even, days to expiry, capital at risk,",
+          "assignment risk, premium per risk unit, historical assignment rate, net premium,",
+          "sample size, and high/medium downside factors. A high win rate with negative net",
+          "premium is adverse evidence, not a reason to recommend the ticker.",
+          "",
+          "Return five sections:",
+          "A. Screen conditions — market status, filters, access limits, and candidate count.",
+          "B. Comparison table — one row per analyzed candidate with the decisive returned measurements.",
+          "C. Recommend one candidate — or recommend waiting if no candidate is defensible.",
+          "D. Why this candidate / why not the alternatives — cite concrete measurements and downside factors.",
+          "E. Trade boundary — state premium, collateral, break-even, assignment obligation,",
+          "   and what GreeksSurge cannot verify: current quote, liquidity, company events,",
+          "   brokerage buying power, existing positions, taxes, and suitability.",
+          "",
+          "Never place, submit, stage, or claim to have executed an order. This is an",
+          "evidence-grounded educational recommendation; the user makes the trading decision.",
+          "",
+          GUARDRAIL,
+        ].join("\n"),
+      ),
+  );
+
+  options.register(
+    "wheel_strategy_review",
+    {
+      title: "Review a wheel-strategy entry",
+      description:
+        "Review one ticker as the cash-secured-put first stage of a wheel strategy, with explicit data boundaries.",
+      argsSchema: {
+        ticker: optionalArg(
+          "Ticker to review as a first-stage wheel candidate. Required in practice.",
+        ),
+      },
+    },
+    (args) =>
+      userMessage(
+        [
+          args.ticker?.trim()
+            ? `Review ${args.ticker.trim().toUpperCase()} as the first wheel stage.`
+            : "Review a ticker as the first wheel stage. Ask me which ticker before calling anything.",
+          "",
+          "1. Call analyze_ticker for the ticker.",
+          "2. Call list_trade_history with symbol set to the ticker and limit 50.",
+          "3. Call list_education, find the closest cash-secured-put or wheel lesson, and",
+          "   call get_education_article only when there is an unambiguous matching slug.",
+          "4. Call get_market_status to time-anchor the review.",
+          "",
+          "Explain whether the returned evidence supports investigating this ticker for the",
+          "cash-secured-put first wheel stage. Cover break-even, assignment probability and",
+          "history, capital, downside factors, sample size, and the obligation to buy 100 shares.",
+          "",
+          "State the boundary plainly: GreeksSurge MCP has no covered-call chain, brokerage",
+          "position or share ownership, buying power, live quote, tax-lot, or order-entry data.",
+          "Those facts are not available and cannot be verified here, so do not claim that the",
+          "full wheel can be completed or that an assigned lot is suitable for covered calls.",
+          "",
+          GUARDRAIL,
+        ].join("\n"),
+      ),
+  );
+
+  options.register(
+    "getting_started",
+    {
+      title: "Get started with GreeksSurge MCP",
+      description:
+        "Explain the live capabilities, safety boundary, and useful first requests for someone new to GreeksSurge MCP.",
+    },
+    () =>
+      userMessage(
+        [
+          "Show me how to use GreeksSurge MCP without assuming I know its tools.",
+          "",
+          "Call these tools:",
+          "1. get_account — connection, tier, and masking status.",
+          "2. get_available_filters — the current screening vocabulary.",
+          "3. list_education — the course map and progress.",
+          "",
+          "Then explain, in plain language:",
+          "- What GreeksSurge is: cash-secured-put research and education with account-scoped data.",
+          "- What this MCP can read: ideas, filters, downside analysis, settled history,",
+          "  performance, watchlist/preferences, and education.",
+          "- What it cannot do: live brokerage verification, order placement, account mutation,",
+          "  billing, or personalized financial advice.",
+          "- Which prompt to use for planning a CSP, reviewing one ticker, a wheel entry,",
+          "  performance, assignments, a watchlist, and learning.",
+          "",
+          "Finish with an `Example requests` list containing at least six natural-language",
+          "requests, including: plan a cash-secured put, compare current ideas, explain",
+          "assignment risk, review a wheel entry, audit performance, and teach one lesson.",
           "",
           GUARDRAIL,
         ].join("\n"),
