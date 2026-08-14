@@ -2,7 +2,7 @@
 
 ## Supported version
 
-Version 0.2.1 ships only a local stdio MCP server. Local stdio is the only shipped transport in v0.2.1.
+Version 0.3.0 ships only a local stdio MCP server. Local stdio is the only shipped transport in v0.3.0.
 
 Hosted Streamable HTTP/OAuth is not shipped because `csp.greekssurge.com` lacks the required OAuth discovery/backend contract for a compliant remote MCP endpoint.
 
@@ -10,9 +10,11 @@ Hosted Streamable HTTP/OAuth is not shipped because `csp.greekssurge.com` lacks 
 
 No Google password collection. The CLI never prompts for, stores, proxies, or logs a Google password.
 
-`npx -y greekssurge-mcp auth login` reuses the authenticated GreeksSurge session in BrowserOS. It does not launch a disposable browser or collect credentials. It reads only `localStorage.gs_token` from a tab whose origin is exactly `https://csp.greekssurge.com`, through BrowserOS's loopback-only DevTools endpoint.
+`npx -y greekssurge-mcp auth login` uses an installed Chromium-family browser when available. If none exists, it downloads stable Chrome for Testing into the package cache. It launches that executable visibly with a package-owned browser profile and a loopback-only DevTools endpoint. The user completes Google login directly in the browser; the CLI never receives the password.
 
-The imported token is validated through the GreeksSurge `/api/auth/me` endpoint before it is written. If BrowserOS discovery, session import, or validation fails, nothing new is stored and an existing valid local credential is preserved. No token is accepted through CLI arguments, stdout, logs, clipboard, or manual paste.
+The CLI reads only `localStorage.gs_token` from a tab whose origin is exactly `https://csp.greekssurge.com`. The captured token is validated through the GreeksSurge `/api/auth/me` endpoint before it is written. If browser discovery/download, launch, exact-origin capture, or validation fails, nothing new is stored and an existing valid local credential is preserved. No token is accepted through CLI arguments, stdout, logs, clipboard, or manual paste.
+
+Chrome 136+ intentionally blocks remote debugging against the default personal browser data directory. The package therefore uses its own persistent profile beside the token store. It does not inspect, copy, or modify the user's personal browser profile, cookies, history, or tabs, and it closes only the browser process launched by the login command.
 
 ## Local token storage
 

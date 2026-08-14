@@ -172,7 +172,7 @@ async function installAndSmokeTest(tarball) {
     cwd: temp,
     env,
   }).stdout.trim();
-  if (version !== "0.2.1")
+  if (version !== "0.3.0")
     throw new Error(`Unexpected CLI version: ${version}`);
 
   const api = await fixtureApi();

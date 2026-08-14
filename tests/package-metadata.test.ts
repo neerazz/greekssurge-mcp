@@ -9,10 +9,10 @@ describe("package metadata", () => {
     const pkg = await readJson("package.json");
 
     expect(pkg.name).toBe("greekssurge-mcp");
-    expect(pkg.version).toBe("0.2.1");
+    expect(pkg.version).toBe("0.3.0");
     expect(pkg.description).toMatch(/read-only Model Context Protocol server/i);
     expect(pkg.type).toBe("module");
-    expect(pkg.engines?.node).toBe(">=20");
+    expect(pkg.engines?.node).toBe(">=22.12.0");
     expect(pkg.bin?.["greekssurge-mcp"]).toBe("dist/cli.js");
     expect(pkg.exports?.["."]).toBe("./dist/index.js");
     expect(pkg.repository).toEqual({
@@ -42,7 +42,7 @@ describe("package metadata", () => {
   });
 
   it("keeps every public version surface aligned", async () => {
-    const expected = "0.2.1";
+    const expected = "0.3.0";
     const pkg = await readJson("package.json");
     const lock = await readJson("package-lock.json");
     const cli = await readFile("src/cli.ts", "utf8");
@@ -55,7 +55,7 @@ describe("package metadata", () => {
     expect(lock.packages[""].version).toBe(expected);
     for (const source of [cli, index, server, verifier]) {
       expect(source).toContain(expected);
-      expect(source).not.toContain("0.2.0");
+      expect(source).not.toContain("0.2.1");
     }
   });
 
@@ -140,7 +140,7 @@ describe("package metadata", () => {
     const publish = await readFile(".github/workflows/publish.yml", "utf8");
 
     expect(ci).toContain("os: [ubuntu-latest, macos-latest, windows-latest]");
-    expect(ci).toContain("node-version: [20.x, 22.x]");
+    expect(ci).toContain("node-version: [22.x, 24.x]");
     for (const command of [
       "npm ci",
       "npm run format:check",

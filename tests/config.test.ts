@@ -12,6 +12,12 @@ describe("loadConfig", () => {
     expect(config.port).toBe(3333);
     expect(config.allowedHosts).toEqual(["127.0.0.1", "localhost"]);
     expect(config.tokenPath).toContain("greekssurge-mcp");
+    expect(config.chromiumProfileDir).toBe(
+      "/tmp/home/Library/Application Support/greekssurge-mcp/chromium-profile",
+    );
+    expect(config.browserCacheDir).toBe(
+      "/tmp/home/Library/Application Support/greekssurge-mcp/browser-cache",
+    );
   });
 
   it("accepts explicit environment overrides", () => {
@@ -24,6 +30,8 @@ describe("loadConfig", () => {
       PORT: "8088",
       ALLOWED_HOSTS: "localhost,example.test",
       GREEKSSURGE_TOKEN_PATH: "/tmp/token.json",
+      GREEKSSURGE_CHROMIUM_PROFILE_DIR: "/tmp/profile",
+      GREEKSSURGE_BROWSER_CACHE_DIR: "/tmp/cache",
     });
 
     expect(config.apiBaseUrl.toString()).toBe("https://example.test/api-root/");
@@ -33,6 +41,8 @@ describe("loadConfig", () => {
     expect(config.port).toBe(8088);
     expect(config.allowedHosts).toEqual(["localhost", "example.test"]);
     expect(config.tokenPath).toBe("/tmp/token.json");
+    expect(config.chromiumProfileDir).toBe("/tmp/profile");
+    expect(config.browserCacheDir).toBe("/tmp/cache");
     expect(config).not.toHaveProperty("browserExecutable");
   });
 

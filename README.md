@@ -24,7 +24,7 @@ GreeksSurge data instead of guesses.
 
 A local [Model Context Protocol](https://modelcontextprotocol.io) server that gives an
 AI client **11 read-only tools** and **11 ready-made prompts** over your GreeksSurge data,
-authenticated with the signed-in session you keep in BrowserOS.
+authenticated through a package-managed Chromium sign-in.
 
 | It can                                       | It cannot                          |
 | -------------------------------------------- | ---------------------------------- |
@@ -40,16 +40,12 @@ Repository: https://github.com/neerazz/greekssurge-mcp
 
 ## Quick start
 
-**Requirements:** Node.js 20+ · [BrowserOS](https://browseros.com) with a signed-in
-`https://csp.greekssurge.com` tab
-
-[Install BrowserOS](https://docs.browseros.com/neo/install) on macOS, Windows, or Linux,
-start it, open `https://csp.greekssurge.com`, and sign in normally. Keep that tab open so
-the CLI can import the site-issued token from the exact origin without reading your
-Google password.
+**Requirements:** Node.js 22.12+ on macOS, Windows, or Linux. No browser installation is
+required up front: the CLI reuses an installed Chromium-family browser when available and
+downloads stable Chrome for Testing into its private cache when none exists.
 
 ```sh
-# 1. Reuse the signed-in GreeksSurge session in BrowserOS
+# 1. Launch the managed Chromium sign-in and complete Google login in that window
 npx -y greekssurge-mcp auth login
 
 # 2. Confirm the token was stored
@@ -61,14 +57,16 @@ claude mcp add --scope user greekssurge -- npx -y greekssurge-mcp
 
 Verify the connection by asking your client to call `get_account`. A working setup returns your tier, for example `{"tier":"lifetime","isLifetimeFree":true,...}`.
 
-Step 1 reads only the `gs_token` value from a tab whose origin is exactly
+Step 1 launches the browser with a package-owned persistent profile and loopback-only CDP.
+It reads only the `gs_token` value from a tab whose origin is exactly
 `https://csp.greekssurge.com`, validates it against `/api/auth/me`, and saves it to a
 private local file. It never asks for your Google password and never makes you paste a
-token anywhere.
+token anywhere. The profile persists, so later authentication refreshes normally do not
+require another Google login.
 
-`auth login` is also the BrowserOS connectivity diagnostic. If BrowserOS is not running,
-the site tab is absent, or the exact-origin session is signed out, it exits nonzero with
-the corrective action instead of storing a credential.
+`auth login` is also the Chromium connectivity diagnostic. Browser startup, download,
+sign-in, exact-origin capture, and token validation all fail closed without replacing a
+previously valid local credential.
 
 ## Ask in plain English
 
@@ -307,21 +305,22 @@ No prompt UI in your client? Just ask in plain language — the tools work the s
 
 ## Troubleshooting
 
-| Symptom                            | Fix                                                                                                                                                          |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `npx -y greekssurge-mcp` not found | Confirm Node.js 20+ with `node --version`, then `npx -y greekssurge-mcp --version`                                                                           |
-| Login fails                        | Start BrowserOS, open `https://csp.greekssurge.com`, sign in normally, leave that tab open, re-run `auth login`. Lookalike hostnames are rejected on purpose |
-| Connects, but authed tools error   | Token expired — run `auth login` again. To clear it deliberately: `auth logout`                                                                              |
-| Numbers read as blank or zero      | Check `get_account`. If `premiumMasked` is `true`, your tier masks those values — hidden, not missing                                                        |
-| Remote/HTTP URL setup fails        | Local stdio is the only transport in this version. Remove any remote MCP URL                                                                                 |
-| Unexpected output on stdout        | The server writes JSON-RPC to stdout and logs to stderr. Drop any wrapper script that prints banners                                                         |
+| Symptom                            | Fix                                                                                                                                         |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npx -y greekssurge-mcp` not found | Confirm Node.js 22.12+ with `node --version`, then `npx -y greekssurge-mcp --version`                                                       |
+| Chromium download fails            | Check HTTPS/proxy access to Google Chrome for Testing storage, then re-run `auth login`; partial downloads are not treated as authenticated |
+| Login times out                    | Complete Google sign-in in the Chromium window within five minutes, then re-run `auth login`; lookalike origins are rejected                |
+| Connects, but authed tools error   | Token expired — run `auth login` again. To clear it deliberately: `auth logout`                                                             |
+| Numbers read as blank or zero      | Check `get_account`. If `premiumMasked` is `true`, your tier masks those values — hidden, not missing                                       |
+| Remote/HTTP URL setup fails        | Local stdio is the only transport in this version. Remove any remote MCP URL                                                                |
+| Unexpected output on stdout        | The server writes JSON-RPC to stdout and logs to stderr. Drop any wrapper script that prints banners                                        |
 
 Never paste a GreeksSurge token into client configuration. The server keeps its own
 local token store.
 
 ## Transport status
 
-Local stdio is the only shipped transport in v0.2.1.
+Local stdio is the only shipped transport in v0.3.0.
 
 Hosted Streamable HTTP/OAuth is not shipped because `csp.greekssurge.com` lacks the required OAuth discovery/backend contract for a compliant remote MCP endpoint. Do not configure a remote URL for this version; use local stdio.
 
@@ -332,8 +331,8 @@ The canonical package is published on npm as
 unavailable, use the matching GitHub release in the same command position:
 
 ```sh
-npx -y github:neerazz/greekssurge-mcp#v0.2.1 auth login
-npx -y github:neerazz/greekssurge-mcp#v0.2.1
+npx -y github:neerazz/greekssurge-mcp#v0.3.0 auth login
+npx -y github:neerazz/greekssurge-mcp#v0.3.0
 ```
 
 The canonical published command is `npx -y greekssurge-mcp`; the GitHub form is fallback-only.
@@ -341,8 +340,8 @@ The canonical published command is `npx -y greekssurge-mcp`; the GitHub form is 
 ## Security and privacy
 
 - No Google password collection.
-- Login imports an existing session only from an exact-origin GreeksSurge BrowserOS tab,
-  over BrowserOS's loopback-only DevTools endpoint.
+- Login launches an installed or automatically downloaded Chromium-family browser with a
+  package-owned profile and reads only an exact-origin GreeksSurge tab over loopback CDP.
 - Imported tokens are validated against `/api/auth/me` before storage; a failed check
   leaves your previous credential untouched.
 - Tokens are stored under your local user profile with POSIX `0600` permissions on

@@ -4,7 +4,7 @@ import type { TokenStore } from "./token-store.js";
 export interface LocalLoginOptions {
   store: TokenStore;
   validateToken: (token: string) => Promise<{ tier?: string }>;
-  readBrowserToken: () => Promise<string>;
+  readSessionToken: () => Promise<string>;
 }
 
 export async function validateTokenWithApi(
@@ -23,13 +23,13 @@ export async function validateTokenWithApi(
 export async function runLocalLogin(
   options: LocalLoginOptions,
 ): Promise<{ status: "authenticated"; tier?: string }> {
-  const token = await options.readBrowserToken();
+  const token = await options.readSessionToken();
   let validation: { tier?: string };
   try {
     validation = await options.validateToken(token);
   } catch {
     throw new Error(
-      "Unable to validate the BrowserOS GreeksSurge session. Nothing was stored.",
+      "Unable to validate the Chromium GreeksSurge session. Nothing was stored.",
     );
   }
   await options.store.write(token);

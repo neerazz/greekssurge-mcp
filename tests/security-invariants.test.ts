@@ -35,19 +35,35 @@ const syntheticMarkers = [
 ];
 
 describe("security invariants", () => {
-  it("confines BrowserOS session import to the exact GreeksSurge origin and loopback debugger", async () => {
-    const corpus = await readFile("src/auth/browseros-session.ts", "utf8");
+  it("confines managed Chromium session import to its package profile, exact origin, and loopback debugger", async () => {
+    const corpus = await readFile("src/auth/chromium-session.ts", "utf8");
+    const config = await readFile("src/config.ts", "utf8");
     const pkg = JSON.parse(await readFile("package.json", "utf8"));
 
     expect(corpus).toContain('"https://csp.greekssurge.com"');
     expect(corpus).toContain("localStorage.getItem('gs_token')");
     expect(corpus).toMatch(/127\.0\.0\.1.*localhost.*::1/s);
     expect(corpus).toMatch(/\/devtools\\\/page/);
-    expect(corpus).not.toMatch(
-      /spawn\(|--user-data-dir|--remote-debugging-port/,
-    );
+    expect(corpus).toMatch(/spawn\(|--user-data-dir|--remote-debugging-port/);
+    expect(config).toContain("chromium-profile");
     expect(pkg.dependencies).toHaveProperty("ws");
+    expect(pkg.dependencies["@puppeteer/browsers"]).toBe("3.2.0");
     expect(pkg.devDependencies).toHaveProperty("@types/ws");
+  });
+
+  it("does not require or advertise BrowserOS anywhere in the public login contract", async () => {
+    const corpus = (
+      await Promise.all(
+        [
+          "README.md",
+          "SECURITY.md",
+          "src/cli.ts",
+          "src/auth/local-login.ts",
+        ].map((path) => readFile(path, "utf8")),
+      )
+    ).join("\n");
+
+    expect(corpus).not.toMatch(/BrowserOS/i);
   });
 
   it("does not contain forbidden mutation, admin, billing, or payment endpoint literals", async () => {

@@ -34,7 +34,7 @@ describe("CLI lifecycle", () => {
     });
     expect(await capture(["--version"])).toMatchObject({
       code: 0,
-      stdout: expect.stringContaining("0.2.1"),
+      stdout: expect.stringContaining("0.3.0"),
     });
   });
 
@@ -78,7 +78,9 @@ describe("CLI lifecycle", () => {
       stdout: expect.stringContaining("/api/auth/me"),
     });
     const loginDryRun = await capture(["auth", "login", "--dry-run"]);
-    expect(loginDryRun.stdout).toMatch(/BrowserOS/i);
+    expect(loginDryRun.stdout).toMatch(/Chromium/i);
+    expect(loginDryRun.stdout).toMatch(/download/i);
+    expect(loginDryRun.stdout).not.toMatch(/BrowserOS/i);
     expect(loginDryRun.stdout).toMatch(/\/api\/auth\/me/i);
     const setup = await capture(["setup"]);
     expect(setup).toMatchObject({

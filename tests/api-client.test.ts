@@ -68,7 +68,7 @@ describe("GreeksSurgeClient", () => {
     const account = await client.getAccount();
 
     expect(authHeader).toBe("Bearer site-token");
-    expect(userAgent).toMatch(/^greekssurge-mcp\/0\.2\.1/);
+    expect(userAgent).toMatch(/^greekssurge-mcp\/0\.3\.0/);
     expect(account.userTier).toBe("premium");
     expect(JSON.stringify(account)).not.toContain(
       "fixture-token-must-not-be-exposed",

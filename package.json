@@ -1,6 +1,6 @@
 {
   "name": "greekssurge-mcp",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Read-only Model Context Protocol server for live GreeksSurge cash-secured-put research, performance, education, and decision-support prompts.",
   "type": "module",
   "license": "MIT",
@@ -24,7 +24,7 @@
     "read-only"
   ],
   "engines": {
-    "node": ">=20"
+    "node": ">=22.12.0"
   },
   "exports": {
     ".": "./dist/index.js"
@@ -55,6 +55,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.30.0",
+    "@puppeteer/browsers": "3.2.0",
     "ws": "^8.18.3",
     "zod": "^4.1.13"
   },

@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { GreeksSurgeClient } from "./api/client.js";
 import { FileTokenStore } from "./auth/token-store.js";
 import { runLocalLogin, validateTokenWithApi } from "./auth/local-login.js";
-import { readBrowserOsToken } from "./auth/browseros-session.js";
+import { readChromiumToken } from "./auth/chromium-session.js";
 import { createGreeksSurgeMcpServer } from "./mcp/create-server.js";
 import { loadConfig } from "./config.js";
 import { createLogger } from "./logger.js";
@@ -24,12 +24,12 @@ export interface CliIO {
   stderr?: (text: string) => void;
 }
 
-const VERSION = "0.2.1";
+const VERSION = "0.3.0";
 const HELP = `greekssurge-mcp ${VERSION}
 
 Commands:
   greekssurge-mcp [serve]              Start the read-only MCP stdio server
-  greekssurge-mcp auth login           Import the current signed-in GreeksSurge BrowserOS session
+  greekssurge-mcp auth login           Sign in through a managed Chromium browser
   greekssurge-mcp auth status          Show whether a local GreeksSurge token is stored
   greekssurge-mcp auth logout          Delete the local GreeksSurge token
   greekssurge-mcp setup                Print client setup guidance
@@ -159,13 +159,18 @@ async function authCommand(
       return rejectAuthFlags(stderr);
     if (args.includes("--dry-run")) {
       stdout(
-        "Dry run: would import the existing signed-in GreeksSurge session from an exact-origin BrowserOS tab, validate it through /api/auth/me, and store it locally with owner-only permissions.\n",
+        "Dry run: would reuse an installed Chromium-family browser or download one if absent, launch a package-owned profile, capture only the exact-origin GreeksSurge session through loopback CDP, validate it through /api/auth/me, and store it locally with owner-only permissions.\n",
       );
       return 0;
     }
     const result = await runLocalLogin({
       store,
-      readBrowserToken: () => readBrowserOsToken(),
+      readSessionToken: () =>
+        readChromiumToken({
+          profileDir: config.chromiumProfileDir,
+          cacheDir: config.browserCacheDir,
+          env,
+        }),
       validateToken: (token) => validateTokenWithApi(config.apiBaseUrl, token),
     });
     stdout(`Authenticated${result.tier ? ` as ${result.tier}` : ""}.\n`);

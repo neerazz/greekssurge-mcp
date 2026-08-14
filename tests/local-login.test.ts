@@ -20,18 +20,18 @@ class MemoryTokenStore implements TokenStore {
 }
 
 describe("local login service", () => {
-  it("validates and stores the existing BrowserOS session", async () => {
+  it("validates and stores the captured Chromium session", async () => {
     const store = new MemoryTokenStore();
-    const readBrowserToken = vi.fn(async () => "synthetic-test-token");
+    const readSessionToken = vi.fn(async () => "synthetic-test-token");
     const validateToken = vi.fn(async () => ({ tier: "lifetime" }));
 
     const result = await runLocalLogin({
       store,
-      readBrowserToken,
+      readSessionToken,
       validateToken,
     });
 
-    expect(readBrowserToken).toHaveBeenCalledOnce();
+    expect(readSessionToken).toHaveBeenCalledOnce();
     expect(validateToken).toHaveBeenCalledWith("synthetic-test-token");
     expect(store.token).toBe("synthetic-test-token");
     expect(result).toEqual({ status: "authenticated", tier: "lifetime" });
@@ -44,12 +44,12 @@ describe("local login service", () => {
     await expect(
       runLocalLogin({
         store,
-        readBrowserToken: async () => "synthetic-test-token",
+        readSessionToken: async () => "synthetic-test-token",
         validateToken: async () => {
           throw new Error("AUTH_REQUIRED");
         },
       }),
-    ).rejects.toThrow(/BrowserOS GreeksSurge session/);
+    ).rejects.toThrow(/Chromium GreeksSurge session/);
 
     expect(store.token).toBe("site-token");
   });
