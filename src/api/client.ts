@@ -27,7 +27,7 @@ interface CacheEntry {
 }
 
 const USER_AGENT =
-  "greekssurge-mcp/0.1.2 (+https://github.com/neerazz/greekssurge-mcp)";
+  "greekssurge-mcp/0.1.3 (+https://github.com/neerazz/greekssurge-mcp)";
 const ALLOWED_STATIC_PATHS = new Set([
   "/api/status",
   "/api/auth/me",

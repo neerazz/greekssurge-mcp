@@ -58,7 +58,7 @@ describe("public release documentation", () => {
     expect(readme).toContain("npx -y greekssurge-mcp auth login");
     expect(readme).toContain("npx -y greekssurge-mcp");
     expect(readme).toMatch(/verify[^\n]+get_account/i);
-    expect(readme).toContain("github:neerazz/greekssurge-mcp#v0.1.2");
+    expect(readme).toContain("github:neerazz/greekssurge-mcp#v0.1.3");
     expect(readme).toMatch(/published on npm/i);
     expect(readme).toMatch(/fallback-only/i);
     expect(readme).toContain("https://github.com/neerazz/greekssurge-mcp");
@@ -113,11 +113,11 @@ describe("public release documentation", () => {
     expect(readme).toMatch(/##\s+Troubleshooting/);
   });
 
-  it("discloses v0.1.2 local-only transport and the real remote blocker", async () => {
+  it("discloses v0.1.3 local-only transport and the real remote blocker", async () => {
     const readme = await read(docs.readme);
 
     expect(readme).toMatch(
-      /local stdio is the only shipped transport in v0\.1\.2/i,
+      /local stdio is the only shipped transport in v0\.1\.3/i,
     );
     expect(readme).toMatch(/Streamable HTTP\/OAuth[^\n]+not shipped/i);
     expect(readme).toMatch(
@@ -176,7 +176,7 @@ describe("public release documentation", () => {
     expect(codeOfConduct).toContain("Contributor Covenant");
 
     // Troubleshooting used to live in docs/troubleshooting.md; it must survive in the README.
-    expect(readme).toContain("github:neerazz/greekssurge-mcp#v0.1.2");
+    expect(readme).toContain("github:neerazz/greekssurge-mcp#v0.1.3");
     expect(readme).toMatch(/canonical published command/i);
     expect(readme).toMatch(/auth logout/);
     expect(readme).toMatch(/premiumMasked/);

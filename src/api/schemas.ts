@@ -70,7 +70,20 @@ const idea = z.object({
   // Upstream stopped sending optionSymbol; it is never surfaced through any MCP
   // tool, so accept its absence rather than failing the whole ideas payload.
   optionSymbol: boundedString(80).optional(),
-  executiveBrief: z.string().max(5_000).nullable().optional(),
+  executiveBrief: z
+    .union([
+      z.string().max(5_000),
+      z.object({
+        rationale: z.string().max(5_000),
+        technicalContext: z.string().max(5_000),
+        entryWindowLow: finiteNumber,
+        entryWindowHigh: finiteNumber,
+        score: finiteNumber,
+        rank: z.number().int().nonnegative(),
+      }),
+    ])
+    .nullable()
+    .optional(),
   orderStatus: optionalString(80),
   ideaMode: boundedString(80),
 });

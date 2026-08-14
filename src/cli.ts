@@ -24,7 +24,7 @@ export interface CliIO {
   stderr?: (text: string) => void;
 }
 
-const VERSION = "0.1.2";
+const VERSION = "0.1.3";
 const HELP = `greekssurge-mcp ${VERSION}
 
 Commands:

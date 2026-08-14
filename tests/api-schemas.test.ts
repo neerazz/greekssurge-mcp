@@ -106,6 +106,14 @@ describe("GreeksSurge upstream schemas", () => {
       ideas: Record<string, unknown>[];
     };
     for (const idea of ideas.ideas) delete idea.optionSymbol;
+    ideas.ideas[0]!.executiveBrief = {
+      rationale: "Sanitized rationale",
+      technicalContext: "Sanitized technical context",
+      entryWindowLow: 10,
+      entryWindowHigh: 12,
+      score: 7.5,
+      rank: 1,
+    };
     expect(() => parseUpstream("ideas", ideas)).not.toThrow();
 
     const article = (await fixture("education-article")) as Record<
