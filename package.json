@@ -55,7 +55,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.30.0",
-    "@puppeteer/browsers": "3.2.0",
+    "@puppeteer/browsers": "3.2.2",
     "ws": "^8.18.3",
     "zod": "^4.1.13"
   },
