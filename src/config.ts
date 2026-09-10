@@ -9,8 +9,6 @@ export interface AppConfig {
   port: number;
   allowedHosts: string[];
   tokenPath: string;
-  chromiumProfileDir: string;
-  browserCacheDir: string;
 }
 
 type Env = Record<string, string | undefined>;
@@ -67,8 +65,7 @@ const envSchema = z.object({
     )
     .pipe(z.array(z.string().min(1)).min(1)),
   GREEKSSURGE_TOKEN_PATH: z.string().optional(),
-  GREEKSSURGE_CHROMIUM_PROFILE_DIR: z.string().optional(),
-  GREEKSSURGE_BROWSER_CACHE_DIR: z.string().optional(),
+
   XDG_CONFIG_HOME: z.string().optional(),
   APPDATA: z.string().optional(),
   LOCALAPPDATA: z.string().optional(),
@@ -103,8 +100,7 @@ export function loadConfig(env: Env = process.env): AppConfig {
 
   const data = parsed.data;
   const tokenPath = data.GREEKSSURGE_TOKEN_PATH ?? defaultTokenPath(env);
-  const path = process.platform === "win32" ? win32 : posix;
-  const configRoot = path.dirname(tokenPath);
+
   return {
     apiBaseUrl: data.GREEKSSURGE_API_BASE_URL,
     transport: data.MCP_TRANSPORT,
@@ -112,11 +108,5 @@ export function loadConfig(env: Env = process.env): AppConfig {
     port: data.PORT,
     allowedHosts: data.ALLOWED_HOSTS,
     tokenPath,
-    chromiumProfileDir:
-      data.GREEKSSURGE_CHROMIUM_PROFILE_DIR ??
-      path.join(configRoot, "chromium-profile"),
-    browserCacheDir:
-      data.GREEKSSURGE_BROWSER_CACHE_DIR ??
-      path.join(configRoot, "browser-cache"),
   };
 }

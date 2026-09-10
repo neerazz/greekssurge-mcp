@@ -4,7 +4,8 @@ import { fileURLToPath } from "node:url";
 import { GreeksSurgeClient } from "./api/client.js";
 import { FileTokenStore } from "./auth/token-store.js";
 import { runLocalLogin, validateTokenWithApi } from "./auth/local-login.js";
-import { readChromiumToken } from "./auth/chromium-session.js";
+import { startBrowserHandoff } from "./auth/browser-handoff.js";
+import { openSystemBrowser } from "./auth/system-browser.js";
 import { createGreeksSurgeMcpServer } from "./mcp/create-server.js";
 import { loadConfig } from "./config.js";
 import { createLogger } from "./logger.js";
@@ -24,12 +25,12 @@ export interface CliIO {
   stderr?: (text: string) => void;
 }
 
-const VERSION = "0.3.0";
+const VERSION = "0.4.0";
 const HELP = `greekssurge-mcp ${VERSION}
 
 Commands:
   greekssurge-mcp [serve]              Start the read-only MCP stdio server
-  greekssurge-mcp auth login           Sign in through a managed Chromium browser
+  greekssurge-mcp auth login           Connect through your default browser
   greekssurge-mcp auth status          Show whether a local GreeksSurge token is stored
   greekssurge-mcp auth logout          Delete the local GreeksSurge token
   greekssurge-mcp setup                Print client setup guidance
@@ -157,24 +158,47 @@ async function authCommand(
       args.filter((arg) => arg === "--dry-run").length > 1
     )
       return rejectAuthFlags(stderr);
+    if (config.apiBaseUrl.toString() !== "https://csp.greekssurge.com/") {
+      throw new Error(
+        "Interactive login requires the official GreeksSurge API origin.",
+      );
+    }
     if (args.includes("--dry-run")) {
       stdout(
-        "Dry run: would reuse an installed Chromium-family browser or download one if absent, launch a package-owned profile, capture only the exact-origin GreeksSurge session through loopback CDP, validate it through /api/auth/me, and store it locally with owner-only permissions.\n",
+        "Dry run: would open a private local connection page in your OS default browser. Save its one-time Connect bookmark, sign in normally on GreeksSurge, then click the bookmark and approve the encrypted session handoff. Validate through /api/auth/me before storing locally with owner-only permissions.\n",
       );
       return 0;
     }
-    const result = await runLocalLogin({
-      store,
-      readSessionToken: () =>
-        readChromiumToken({
-          profileDir: config.chromiumProfileDir,
-          cacheDir: config.browserCacheDir,
-          env,
-        }),
-      validateToken: (token) => validateTokenWithApi(config.apiBaseUrl, token),
-    });
-    stdout(`Authenticated${result.tier ? ` as ${result.tier}` : ""}.\n`);
-    return 0;
+    const controller = new AbortController();
+    const cancel = () => controller.abort();
+    process.once("SIGINT", cancel);
+    process.once("SIGTERM", cancel);
+    let handoff: Awaited<ReturnType<typeof startBrowserHandoff>> | undefined;
+    try {
+      handoff = await startBrowserHandoff({
+        signal: controller.signal,
+        completeLogin: (token, signal, beginCommit) =>
+          runLocalLogin({
+            store,
+            signal,
+            beforeStore: beginCommit,
+            readSessionToken: async () => token,
+            validateToken: (value) =>
+              validateTokenWithApi(config.apiBaseUrl, value, { signal }),
+          }),
+      });
+      stderr(
+        "Opening your default browser. Save the one-time Connect bookmark, sign in to GreeksSurge, then click it and approve the handoff. This login expires in five minutes; Ctrl+C cancels.\n",
+      );
+      await openSystemBrowser(handoff.url);
+      const result = await handoff.completion;
+      stdout(`Authenticated${result.tier ? ` as ${result.tier}` : ""}.\n`);
+      return 0;
+    } finally {
+      await handoff?.close();
+      process.off("SIGINT", cancel);
+      process.off("SIGTERM", cancel);
+    }
   }
   stderr(
     "Unknown auth command. Use auth login, auth status, or auth logout.\n",

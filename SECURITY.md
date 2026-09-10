@@ -2,7 +2,7 @@
 
 ## Supported version
 
-Version 0.3.0 ships only a local stdio MCP server. Local stdio is the only shipped transport in v0.3.0.
+Version 0.4.0 ships only a local stdio MCP server. Local stdio is the only shipped transport in v0.4.0.
 
 Hosted Streamable HTTP/OAuth is not shipped because `csp.greekssurge.com` lacks the required OAuth discovery/backend contract for a compliant remote MCP endpoint.
 
@@ -10,11 +10,40 @@ Hosted Streamable HTTP/OAuth is not shipped because `csp.greekssurge.com` lacks 
 
 No Google password collection. The CLI never prompts for, stores, proxies, or logs a Google password.
 
-`npx -y greekssurge-mcp auth login` uses an installed Chromium-family browser when available. If none exists, it downloads stable Chrome for Testing into the package cache. It launches that executable visibly with a package-owned browser profile and a loopback-only DevTools endpoint. The user completes Google login directly in the browser; the CLI never receives the password.
+`auth login` opens a private loopback connection guide in the OS default browser.
+The user saves a one-time bookmark, signs into GreeksSurge normally, and invokes the
+bookmark on that site to approve session sharing. This is session import, not OAuth:
+GreeksSurge has not provided a native CLI authorization/code-exchange contract.
 
-The CLI reads only `localStorage.gs_token` from a tab whose origin is exactly `https://csp.greekssurge.com`. The captured token is validated through the GreeksSurge `/api/auth/me` endpoint before it is written. If browser discovery/download, launch, exact-origin capture, or validation fails, nothing new is stored and an existing valid local credential is preserved. No token is accepted through CLI arguments, stdout, logs, clipboard, or manual paste.
+Only the browser-side bookmark reads `localStorage.gs_token`, and only in the top-level
+`https://csp.greekssurge.com` page. It encrypts the session with AES-256-GCM and wraps
+the key with the login process's pinned, ephemeral RSA-OAEP/SHA-256 public key.
+An exact-origin, exact-source, nonce-bound `postMessage` handshake sends that encrypted
+payload to a user-opened loopback popup. The popup submits a same-origin JSON POST;
+there is no cross-origin fetch allowance or wildcard CORS. The helper never displays
+the session. The bridge never places a token in a URL; the upstream website's own
+Google callback may use token query parameters outside this package's control.
 
-Chrome 136+ intentionally blocks remote debugging against the default personal browser data directory. The package therefore uses its own persistent profile beside the token store. It does not inspect, copy, or modify the user's personal browser profile, cookies, history, or tabs, and it closes only the browser process launched by the login command.
+The listener binds only to `127.0.0.1` on a randomly allocated port. It checks the exact
+Host, raw path, Origin, method, content type, transaction nonce, message size and expiry.
+The transaction is single-use. `/api/auth/me` must validate the decrypted session before
+the private credential store changes; a replacement session returned by that endpoint
+is retained only inside the auth boundary. Failed validation or cancellation before
+storage begins preserves the old credential. Once atomic replacement starts, the CLI
+finishes that commit and reports its actual result instead of claiming a false cancellation.
+No token is accepted through CLI arguments, stdout, logs, clipboard, or manual paste.
+
+The package does not enable debugging ports, enumerate tabs, read personal profile
+files, or install a browser. The browser remains open after login. Delete the expired
+bookmark after use. Old managed-browser caches/profiles are not automatically deleted;
+the new flow ignores them.
+
+This protects against unrelated websites, accidental stale-port reuse and transaction
+replay, not malware running as the same OS user or a compromised GreeksSurge page.
+The imported session retains its upstream permissions: only the MCP adapter's endpoint
+allowlist is read-only; the session itself is not a newly scoped OAuth credential.
+Browser policies, popup blocking, or future local-network restrictions can prevent the
+handoff. Do not weaken browser protections or attach a debugger as a fallback.
 
 ## Local token storage
 

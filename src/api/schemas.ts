@@ -165,10 +165,23 @@ const tradeHistoryIdea = z.object({
   ticker,
   displaySymbol: boundedString(160),
   ideaMode: boundedString(80),
-  strike: finiteNumber,
+  strike: finiteNumber
+    .nullable()
+    .optional()
+    .transform((value) => value ?? null),
   expiry: dateString,
   alertPremium: finiteNumber,
-  closePrice: nullableNumber,
+  closePrice: z
+    .union([
+      finiteNumber,
+      z
+        .string()
+        .regex(/^-?\d+(?:\.\d+)?$/)
+        .transform(Number)
+        .pipe(finiteNumber),
+    ])
+    .nullable()
+    .optional(),
   roi: finiteNumber,
   realizedRoi: nullableNumber,
   projectedRoi: nullableNumber,
@@ -303,10 +316,23 @@ export const upstreamSchemas = {
   watchlist: z.object({
     tickers: z.array(ticker).max(500),
   }),
-  preferences: z.object({
-    watchlistIdeasOnly: z.boolean(),
-    watchlistAlertsOnly: z.boolean(),
-  }),
+  preferences: z.union([
+    z.object({
+      watchlistIdeasOnly: z.boolean(),
+      watchlistAlertsOnly: z.boolean(),
+    }),
+    // Some live responses serialize the alerts flag inside a database subdocument.
+    // Select only the two public flags; never pass its parent/user metadata through.
+    z
+      .object({
+        watchlistIdeasOnly: z.boolean(),
+        _doc: z.object({ watchlistAlertsOnly: z.boolean() }),
+      })
+      .transform((value) => ({
+        watchlistIdeasOnly: value.watchlistIdeasOnly,
+        watchlistAlertsOnly: value._doc.watchlistAlertsOnly,
+      })),
+  ]),
 } as const;
 
 export type UpstreamSchemaName = keyof typeof upstreamSchemas;

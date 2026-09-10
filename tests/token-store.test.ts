@@ -1,4 +1,11 @@
-import { lstat, mkdir, readFile, symlink, writeFile } from "node:fs/promises";
+import {
+  lstat,
+  mkdir,
+  readFile,
+  readdir,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { mkdtemp } from "node:fs/promises";
@@ -11,6 +18,13 @@ async function tempTokenPath() {
 }
 
 describe("FileTokenStore", () => {
+  it("removes temporary credential files if replacement fails", async () => {
+    const tokenPath = await tempTokenPath();
+    await mkdir(tokenPath, { recursive: true });
+    const store = new FileTokenStore({ tokenPath, env: {} });
+    await expect(store.write("synthetic-test-token")).rejects.toThrow();
+    expect(await readdir(dirname(tokenPath))).toEqual(["token.json"]);
+  });
   it("prefers an environment token without writing it to disk", async () => {
     const tokenPath = await tempTokenPath();
     const store = new FileTokenStore({

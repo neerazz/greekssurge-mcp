@@ -98,6 +98,49 @@ describe("GreeksSurge upstream schemas", () => {
     );
   });
 
+  it("normalizes the observed preferences subdocument without exposing database internals", () => {
+    // Live shape: ideas flag at root, alerts flag in _doc. Values are synthetic.
+    const payload = {
+      $__parent: { id: "synthetic-user" },
+      $__: { strictMode: true },
+      $isNew: false,
+      _doc: {
+        watchlistSignalsOnly: true,
+        watchlistAlertsOnly: false,
+        watchlist: ["AAPL"],
+        alertsEnabled: true,
+      },
+      watchlistIdeasOnly: false,
+    };
+    expect(parseUpstream("preferences", payload)).toEqual({
+      watchlistIdeasOnly: false,
+      watchlistAlertsOnly: false,
+    });
+    expect(() =>
+      parseUpstream("preferences", {
+        ...payload,
+        _doc: { watchlistAlertsOnly: "false" },
+      }),
+    ).toThrow();
+    expect(
+      parseUpstream("preferences", { ...payload, watchlistAlertsOnly: true }),
+    ).toEqual({ watchlistIdeasOnly: false, watchlistAlertsOnly: true });
+  });
+
+  it("preserves incomplete history rows without inventing a strike", async () => {
+    const payload = (await fixture("trade-history")) as {
+      ideas: Record<string, unknown>[];
+    };
+    delete payload.ideas[0].strike;
+    payload.ideas[0].closePrice = "0.25";
+    const result = parseUpstream("tradeHistory", payload);
+    expect(result.ideas[0].strike).toBeNull();
+    expect(result.ideas[0].closePrice).toBe(0.25);
+    expect(result.ideas).toHaveLength(payload.ideas.length);
+    payload.ideas[0].closePrice = "not-a-price";
+    expect(() => parseUpstream("tradeHistory", payload)).toThrow();
+  });
+
   // Regression guards for upstream fields that were dropped in production and
   // took three tools down with them. Each of these threw
   // "Upstream contract changed" before being relaxed.

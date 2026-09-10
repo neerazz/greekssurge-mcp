@@ -35,20 +35,24 @@ const syntheticMarkers = [
 ];
 
 describe("security invariants", () => {
-  it("confines managed Chromium session import to its package profile, exact origin, and loopback debugger", async () => {
-    const corpus = await readFile("src/auth/chromium-session.ts", "utf8");
+  it("removes browser instrumentation from the shipped auth path", async () => {
+    const corpus = (
+      await Promise.all(
+        (await walk("src/auth")).map((path) => readFile(path, "utf8")),
+      )
+    ).join("\n");
     const config = await readFile("src/config.ts", "utf8");
     const pkg = JSON.parse(await readFile("package.json", "utf8"));
 
     expect(corpus).toContain('"https://csp.greekssurge.com"');
-    expect(corpus).toContain("localStorage.getItem('gs_token')");
-    expect(corpus).toMatch(/127\.0\.0\.1.*localhost.*::1/s);
-    expect(corpus).toMatch(/\/devtools\\\/page/);
-    expect(corpus).toMatch(/spawn\(|--user-data-dir|--remote-debugging-port/);
-    expect(config).toContain("chromium-profile");
-    expect(pkg.dependencies).toHaveProperty("ws");
-    expect(pkg.dependencies["@puppeteer/browsers"]).toBe("3.2.0");
-    expect(pkg.devDependencies).toHaveProperty("@types/ws");
+    expect(corpus).toContain("127.0.0.1");
+    expect(corpus).not.toMatch(
+      /remote-debugging|user-data-dir|DevToolsActivePort|\/json\/list/,
+    );
+    expect(config).not.toMatch(/chromium-profile|browser-cache/);
+    expect(pkg.dependencies).not.toHaveProperty("ws");
+    expect(pkg.dependencies).not.toHaveProperty("@puppeteer/browsers");
+    expect(pkg.devDependencies).not.toHaveProperty("@types/ws");
   });
 
   it("does not require or advertise BrowserOS anywhere in the public login contract", async () => {

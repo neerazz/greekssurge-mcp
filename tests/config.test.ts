@@ -1,4 +1,3 @@
-import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { defaultTokenPath, loadConfig } from "../src/config.js";
 
@@ -13,13 +12,8 @@ describe("loadConfig", () => {
     expect(config.port).toBe(3333);
     expect(config.allowedHosts).toEqual(["127.0.0.1", "localhost"]);
     expect(config.tokenPath).toContain("greekssurge-mcp");
-    // The browser profile and cache live beside the token store on every OS.
-    expect(config.chromiumProfileDir).toBe(
-      join(dirname(config.tokenPath), "chromium-profile"),
-    );
-    expect(config.browserCacheDir).toBe(
-      join(dirname(config.tokenPath), "browser-cache"),
-    );
+    expect(config).not.toHaveProperty("chromiumProfileDir");
+    expect(config).not.toHaveProperty("browserCacheDir");
   });
 
   it("accepts explicit environment overrides", () => {
@@ -43,8 +37,9 @@ describe("loadConfig", () => {
     expect(config.port).toBe(8088);
     expect(config.allowedHosts).toEqual(["localhost", "example.test"]);
     expect(config.tokenPath).toBe("/tmp/token.json");
-    expect(config.chromiumProfileDir).toBe("/tmp/profile");
-    expect(config.browserCacheDir).toBe("/tmp/cache");
+    // Retired environment variables must not bring profile management back.
+    expect(config).not.toHaveProperty("chromiumProfileDir");
+    expect(config).not.toHaveProperty("browserCacheDir");
     expect(config).not.toHaveProperty("browserExecutable");
   });
 

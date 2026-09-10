@@ -1,6 +1,6 @@
 {
   "name": "greekssurge-mcp",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Read-only Model Context Protocol server for live GreeksSurge cash-secured-put research, performance, education, and decision-support prompts.",
   "type": "module",
   "license": "MIT",
@@ -41,12 +41,14 @@
   "scripts": {
     "build": "node scripts/clean-dist.mjs && tsc -p tsconfig.json",
     "check": "tsc -p tsconfig.json --noEmit",
+    "pretest": "npm run build",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "pack:check": "node scripts/verify-package.mjs",
+    "live:check": "node scripts/verify-live.mjs",
     "scan:secrets": "node scripts/scan-secrets.mjs",
     "audit:runtime": "npm audit --omit=dev --audit-level=high",
     "prepare": "npm run build",
@@ -55,14 +57,11 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.30.0",
-    "@puppeteer/browsers": "3.2.0",
-    "ws": "^8.18.3",
     "zod": "^4.1.13"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.1.1",
-    "@types/ws": "^8.18.1",
     "@vitest/coverage-v8": "^4.1.10",
     "eslint": "^10.8.0",
     "prettier": "^3.6.2",

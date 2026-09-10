@@ -9,7 +9,7 @@ describe("package metadata", () => {
     const pkg = await readJson("package.json");
 
     expect(pkg.name).toBe("greekssurge-mcp");
-    expect(pkg.version).toBe("0.3.0");
+    expect(pkg.version).toBe("0.4.0");
     expect(pkg.description).toMatch(/read-only Model Context Protocol server/i);
     expect(pkg.type).toBe("module");
     expect(pkg.engines?.node).toBe(">=22.12.0");
@@ -42,7 +42,7 @@ describe("package metadata", () => {
   });
 
   it("keeps every public version surface aligned", async () => {
-    const expected = "0.3.0";
+    const expected = "0.4.0";
     const pkg = await readJson("package.json");
     const lock = await readJson("package-lock.json");
     const cli = await readFile("src/cli.ts", "utf8");
@@ -80,6 +80,7 @@ describe("package metadata", () => {
       ]),
     );
     expect(pkg.scripts.prepare).toBe("npm run build");
+    expect(pkg.scripts.pretest).toBe("npm run build");
     expect(pkg.scripts.build).toBe(
       "node scripts/clean-dist.mjs && tsc -p tsconfig.json",
     );
@@ -93,8 +94,10 @@ describe("package metadata", () => {
     );
     expect(pkg.dependencies?.["@modelcontextprotocol/sdk"]).toBe("1.30.0");
     expect(pkg.dependencies?.zod).toMatch(/^\^4\./);
-    expect(pkg.dependencies?.ws).toMatch(/^\^8\./);
-    expect(pkg.devDependencies?.["@types/ws"]).toMatch(/^\^8\./);
+    expect(pkg.dependencies).not.toHaveProperty("ws");
+    expect(pkg.dependencies).not.toHaveProperty("@puppeteer/browsers");
+    expect(pkg.devDependencies).not.toHaveProperty("@types/ws");
+    expect(pkg.scripts["live:check"]).toBe("node scripts/verify-live.mjs");
     expect(pkg.dependencies).not.toHaveProperty("express");
     expect(pkg.dependencies).not.toHaveProperty("express-rate-limit");
   });

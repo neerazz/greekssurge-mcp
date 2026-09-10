@@ -201,7 +201,7 @@ const tradeHistoryIdeaSchema = z
     companyName: boundedString(200),
     ideaMode: boundedString(80),
     expiry: dateString,
-    strike: finiteNumber,
+    strike: finiteNumber.nullable(),
     alertPremium: finiteNumber,
     closePrice: nullableNumber,
     roi: finiteNumber,

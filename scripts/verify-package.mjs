@@ -49,6 +49,8 @@ function verifyTarballContents(contents) {
   const retiredBuildPrefixes = [
     "package/dist/auth/cdp",
     "package/dist/auth/browser-paths",
+    "package/dist/auth/chromium-session",
+    "package/dist/auth/browseros-session",
   ];
   const retired = contents.find((entry) =>
     retiredBuildPrefixes.some((prefix) => entry.startsWith(prefix)),
@@ -172,7 +174,7 @@ async function installAndSmokeTest(tarball) {
     cwd: temp,
     env,
   }).stdout.trim();
-  if (version !== "0.3.0")
+  if (version !== "0.4.0")
     throw new Error(`Unexpected CLI version: ${version}`);
 
   const api = await fixtureApi();

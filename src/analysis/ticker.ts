@@ -181,7 +181,8 @@ function summarizeHistory(
   // worst outcome. Assignment depth can.
   const deepest = assignments.reduce<number | null>((deepestSoFar, trade) => {
     const close = trade.closePrice;
-    if (close === null || close === undefined) return deepestSoFar;
+    if (close === null || close === undefined || trade.strike === null)
+      return deepestSoFar;
     const depth = safeDivide(close * 100, trade.strike);
     if (depth === null) return deepestSoFar;
     return deepestSoFar === null || depth > deepestSoFar ? depth : deepestSoFar;

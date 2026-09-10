@@ -61,14 +61,14 @@ describe("public release documentation", () => {
     expect(readme).toContain("Node.js 22.12+");
     expect(readme).toContain("npx -y greekssurge-mcp auth login");
     expect(readme).toContain("npx -y greekssurge-mcp");
-    expect(readme).toMatch(/installed Chromium-family browser/i);
-    expect(readme).toMatch(/download[^\n]+Chrome for Testing/i);
+    expect(readme).toMatch(/operating.system.s default browser/i);
+    expect(readme).toMatch(/one-time[^\n]+bookmark/i);
     expect(readme).toMatch(/macOS, Windows, or Linux/i);
-    expect(readme).toMatch(/package-owned[^\n]+profile/i);
+    expect(readme).toMatch(/does not[^\n]+download[^\n]+browser/i);
     expect(readme).not.toMatch(/BrowserOS/i);
-    expect(readme).toMatch(/auth login[^\n]+diagnostic/i);
+    expect(readme).toMatch(/not[^\n]+OAuth/i);
     expect(readme).toMatch(/verify[^\n]+get_account/i);
-    expect(readme).toContain("github:neerazz/greekssurge-mcp#v0.3.0");
+    expect(readme).toContain("github:neerazz/greekssurge-mcp#v0.4.0");
     expect(readme).toMatch(/published on npm/i);
     expect(readme).toMatch(/fallback-only/i);
     expect(readme).toContain("https://github.com/neerazz/greekssurge-mcp");
@@ -145,11 +145,11 @@ describe("public release documentation", () => {
     expect(readme).toMatch(/never\s+places?\s+or\s+submits?\s+an?\s+order/i);
   });
 
-  it("discloses v0.3.0 local-only transport and the real remote blocker", async () => {
+  it("discloses v0.4.0 local-only transport and the real remote blocker", async () => {
     const readme = await read(docs.readme);
 
     expect(readme).toMatch(
-      /local stdio is the only shipped transport in v0\.3\.0/i,
+      /local stdio is the only shipped transport in v0\.4\.0/i,
     );
     expect(readme).toMatch(/Streamable HTTP\/OAuth[^\n]+not shipped/i);
     expect(readme).toMatch(
@@ -165,9 +165,9 @@ describe("public release documentation", () => {
 
     for (const required of [
       "No Google password collection",
-      "Chromium",
-      "package-owned browser profile",
-      "loopback-only DevTools endpoint",
+      "default browser",
+      "one-time bookmark",
+      "postMessage",
       "localStorage.gs_token",
       "/api/auth/me",
       "macOS: ~/Library/Application Support/greekssurge-mcp/token.json",
@@ -210,7 +210,7 @@ describe("public release documentation", () => {
     expect(codeOfConduct).toContain("Contributor Covenant");
 
     // Troubleshooting used to live in docs/troubleshooting.md; it must survive in the README.
-    expect(readme).toContain("github:neerazz/greekssurge-mcp#v0.3.0");
+    expect(readme).toContain("github:neerazz/greekssurge-mcp#v0.4.0");
     expect(readme).toMatch(/canonical published command/i);
     expect(readme).toMatch(/auth logout/);
     expect(readme).toMatch(/premiumMasked/);

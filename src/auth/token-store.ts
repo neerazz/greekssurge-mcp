@@ -74,11 +74,14 @@ export class FileTokenStore implements TokenStore {
       `.${basename(this.options.tokenPath)}.${randomUUID()}.tmp`,
     );
     const payload = `${JSON.stringify({ token })}\n`;
-    await writeFile(tempPath, payload, { mode: 0o600 });
-    if (process.platform !== "win32") await chmod(tempPath, 0o600);
-    await rename(tempPath, this.options.tokenPath);
-    if (process.platform !== "win32")
-      await chmod(this.options.tokenPath, 0o600);
+    try {
+      await writeFile(tempPath, payload, { mode: 0o600, flag: "wx" });
+      if (process.platform !== "win32") await chmod(tempPath, 0o600);
+      // Rename preserves the private mode; no fallible chmod after committing.
+      await rename(tempPath, this.options.tokenPath);
+    } finally {
+      await rm(tempPath, { force: true });
+    }
   }
 
   async clear(): Promise<void> {
