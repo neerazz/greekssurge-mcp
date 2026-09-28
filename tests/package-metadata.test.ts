@@ -92,7 +92,7 @@ describe("package metadata", () => {
     expect(pkg.scripts["audit:runtime"]).toBe(
       "npm audit --omit=dev --audit-level=high",
     );
-    expect(pkg.dependencies?.["@modelcontextprotocol/sdk"]).toBe("1.30.0");
+    expect(pkg.dependencies?.["@modelcontextprotocol/sdk"]).toBe("1.30.1");
     expect(pkg.dependencies?.zod).toMatch(/^\^4\./);
     expect(pkg.dependencies).not.toHaveProperty("ws");
     expect(pkg.dependencies).not.toHaveProperty("@puppeteer/browsers");
