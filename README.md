@@ -313,6 +313,13 @@ All arguments are optional.
 
 No prompt UI in your client? Just ask in plain language — the tools work the same.
 
+## Agent skill
+
+[`skills/greekssurge-csp-research`](skills/greekssurge-csp-research/SKILL.md) is a `SKILL.md`
+that tells an agent when to use these tools, in what order, and what a CSP recommendation
+must include. Copy the folder into your agent's skills directory. Any packaged copy of the
+skill is built from this folder.
+
 ## Troubleshooting
 
 | Symptom                            | Fix                                                                                                                                          |
